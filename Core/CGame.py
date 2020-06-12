@@ -1,5 +1,6 @@
 from pywinauto import handleprops
 import win32gui
+from Core.grab_screenshot import grab_screen
 
 class CGame:
   def __init__(self, logger):
@@ -17,8 +18,7 @@ class CGame:
     return self._lastWndIsGame
   
   def screenshot(self):
-    # @todo: take game window screenshot
-    return None
+    return grab_screen(self._lastHWND, 'BGR')
   
   def execute(self, actions):
     # @todo: send actions to game window

@@ -4,6 +4,7 @@ import logging
 import time
 from Core.CBot import CBot
 from Core.CGame import CGame
+import cv2
 
 logging.basicConfig(
   format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -16,13 +17,16 @@ def main():
   bot = CBot(logger)
   game = CGame(logger)
   while bot.isActive():
-    time.sleep(0)
+    cv2.waitKey(1)
     if not game.isActive(): continue
     
-    actions, debugInfo = bot.process(game.screenshot())
+    screenshot = game.screenshot()
+    actions, debugInfo = bot.process(screenshot)
     game.execute(actions)
     debugInfo.show(debugOutput)
     pass
-
+  
+  cv2.destroyAllWindows()
+  
 if __name__ == '__main__':
   main()
