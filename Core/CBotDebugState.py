@@ -1,3 +1,4 @@
+import cv2
 class CBotDebugState:
   def __init__(self, screenshot, logger):
     self.logger = logger
@@ -8,5 +9,8 @@ class CBotDebugState:
     if not configs: return
     
     self.logger.info('working')
-    # @todo: show screenshot
+
+    cv2.imshow('$Output window$', 
+      cv2.resize(self._screenshot, (640, 480))
+    )
     pass
