@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import logging
-import time
 from Core.CBot import CBot
 from Core.CGame import CGame
 import cv2
@@ -9,11 +8,11 @@ import cv2
 logging.basicConfig(
   format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
   level=logging.INFO
-)
+) 
 logger = logging.getLogger(__name__)
 
 def main():
-  debugOutput = True
+  debugOutput = ['map mask']
   bot = CBot(logger)
   game = CGame(logger)
   while bot.isActive():
