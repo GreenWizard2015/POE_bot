@@ -14,7 +14,7 @@ def mapMask(img):
   
   return (marker == mask[:, :]).all(axis=2)
   
-def extractGameMap(img, mapHeight=275, mapWidth=275, indentRT=(5, 4), returnSource=False):
+def extractGameMap(img, mapHeight=256, mapWidth=256, indentRT=(15, 15), returnSource=False):
   _, w, _ = img.shape
   w -= indentRT[0] + mapWidth
   img = img[int(indentRT[1]):int(indentRT[1] + mapHeight), int(w):int(w + mapWidth)]
