@@ -3,6 +3,7 @@ import cv2
 import time
 import os
 import enum
+import numpy as np
 
 from .CBotDebugState import CBotDebugState
 from .extractGameMap import extractGameMap
@@ -38,7 +39,16 @@ class CBot:
     return ([], debug)
   
   def _onIdle(self, screenshot, debug):
-    mapMask, _ = extractGameMap(screenshot, returnSource=False)
+    # temporally code for collecting data
+    dumpMinimap = (win32api.GetAsyncKeyState(ord('T')) & 1) == 1
+      
+    mapMask, mapImg = extractGameMap(screenshot, returnSource=dumpMinimap)
+    if dumpMinimap:
+      os.makedirs("minimap", exist_ok=True)
+      fname = 'minimap/%d_%%s.jpg' % time.time_ns()
+      cv2.imwrite(fname % 'input', mapImg)
+      cv2.imwrite(fname % 'mask', mapMask)
+
     debug.put('map mask', mapMask)
     self.navigator.update(mapMask)
     
