@@ -9,6 +9,8 @@ from .CBotDebugState import CBotDebugState
 from .extractGameMap import extractGameMap
 from .CNavigator import CNavigator
 
+from CMinimapRecognizer import CMinimapRecognizer
+
 class BotState(enum.Enum):
   IDLE = 0
   MOVING = 1
@@ -17,6 +19,7 @@ class BotState(enum.Enum):
 class CBot:
   def __init__(self, logger, navigator=None):
     self.logger = logger
+    self._minimapRecognizer = CMinimapRecognizer()
     self.navigator = navigator if navigator else CNavigator()
     self.state = BotState.IDLE 
     pass
@@ -41,8 +44,9 @@ class CBot:
   def _onIdle(self, screenshot, debug):
     # temporally code for collecting data
     dumpMinimap = (win32api.GetAsyncKeyState(ord('T')) & 1) == 1
-    # TODO: Use CMinimapRecognizer
-    mapMask, mapImg = extractGameMap(screenshot, returnSource=dumpMinimap)
+
+    mapImg = extractGameMap(screenshot)
+    mapMask = self._minimapRecognizer.process(mapImg)
     if dumpMinimap:
       os.makedirs("minimap", exist_ok=True)
       fname = 'minimap/%d_%%s.jpg' % time.time_ns()
