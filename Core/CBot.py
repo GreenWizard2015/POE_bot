@@ -41,7 +41,7 @@ class CBot:
   def _onIdle(self, screenshot, debug):
     # temporally code for collecting data
     dumpMinimap = (win32api.GetAsyncKeyState(ord('T')) & 1) == 1
-      
+    # TODO: Use CMinimapRecognizer
     mapMask, mapImg = extractGameMap(screenshot, returnSource=dumpMinimap)
     if dumpMinimap:
       os.makedirs("minimap", exist_ok=True)
