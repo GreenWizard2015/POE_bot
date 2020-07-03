@@ -4,32 +4,35 @@ from tensorflow.keras.utils import Sequence
 from random import Random
 from glob import glob
 
-""" select single image per epoch and return random crop of inputDims """
+""" select single image per batch and return random crop of inputDims """
 class CDataGenerator(Sequence):
-  def __init__(self, folder, dims, batchSize=32, batchesPerEpoch=2, seed=0):
+  def __init__(self, folder, dims, batchSize, batchesPerEpoch, seed):
     self._images = [
-      (str(f), str(f).replace('_input.jpg', '_mask.jpg')) for f in glob('%s/*_input.jpg' % folder)
+      (
+        str(f), str(f).replace('_input.jpg', '_walls.jpg'), str(f).replace('_input.jpg', '_unknown.jpg')
+      ) for f in glob('%s/*_input.jpg' % folder)
     ]
     self._batchSize = batchSize
     self._dims = dims
     self._batchesPerEpoch = batchesPerEpoch
     self._random = Random(seed)
-    self._epoch = None
+    self._epochBatches = None
     self.on_epoch_end()
+    return 
 
   def on_epoch_end(self):
     """Updates after each epoch"""
-    self._epoch = self._random.choice(self._images)
+    self._epochBatches = self._random.choices(self._images, k=self._batchesPerEpoch)
+    return
 
   def __len__(self):
     return self._batchesPerEpoch
 
   def __getitem__(self, index):
-    # I'm ignoring index, maybe it's bad idea
-    sampleInput, sampleMask = self._epoch
-    sampleInput = cv2.imread(sampleInput) / 255 # normalize
-    sampleMask = cv2.imread(sampleMask, cv2.IMREAD_GRAYSCALE)
-    
+    # TODO: Cache images/masks
+    sampleInput, sampleWalls, sampleUnknown = self._epochBatches[index]
+    sampleInput = cv2.cvtColor(cv2.imread(sampleInput), cv2.COLOR_BGR2Lab) / 255 # normalize
+    # TODO: Generate samples on the borders of input (i.e. randint(-cw // 2, w - cw // 2) )
     cw, ch = self._dims
     w, h = np.array([sampleInput.shape[0] - cw, sampleInput.shape[1] - ch])
     crops = []
@@ -39,7 +42,12 @@ class CDataGenerator(Sequence):
       crops.append((x, y, x + cw, y + ch))
 
     X = self._generate_X(sampleInput, crops)
-    y = self._generate_y(sampleMask, crops)
+    y = self._generate_y(
+      cv2.imread(sampleWalls, cv2.IMREAD_GRAYSCALE),
+      cv2.imread(sampleUnknown, cv2.IMREAD_GRAYSCALE),
+      crops
+    )
+
     return X, y
 
   def _generate_X(self, img, crops):
@@ -50,15 +58,19 @@ class CDataGenerator(Sequence):
 
     return X
 
-  def _generate_y(self, img, crops):
-    y = np.empty((self._batchSize, *self._dims, 2))
-
+  def _generate_y(self, imgWalls, imgUnknown, crops):
+    # preprocessing
+    cv2.GaussianBlur(imgUnknown, (5, 5), 0)
+    imgWalls = np.where(80 < imgWalls, 1, 0).astype(np.float32)
+    imgUnknown = np.where(80 < imgUnknown, 1, 0).astype(np.float32)
+    
+    imgWalls[np.where(0 < imgUnknown)] = 0 # just to be sure
+    
+    ######
+    background = np.where(0 < (imgWalls + imgUnknown), 0, 1).astype(np.float32)
+    mask = np.array([background, imgWalls, imgUnknown]).transpose(1, 2, 0) # (x, w, h) -> (w, h, x)
+    y = np.empty((self._batchSize, *self._dims, mask.shape[-1]))
     for i, (x1, y1, x2, y2) in enumerate(crops):
-      crop = img[x1:x2, y1:y2]
-      mask = np.empty((2, *self._dims))
-      # I saved masks in jpg, so there is an artifacts :)
-      mask[0] = (120 < crop) * 1
-      mask[1] = (228 < crop) * 1
-      y[i,] = mask.transpose(1, 2, 0) # (2, w, h) -> (w, h, 2)
+      y[i,] = mask[x1:x2, y1:y2]
 
-    return y 
+    return y

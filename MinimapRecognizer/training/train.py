@@ -1,47 +1,65 @@
-from model import MRModel, model_hash
-from training.DataGenerator import CDataGenerator
-import tensorflow.keras as keras
-import tensorflow.keras.backend as K
-
 import tensorflow as tf
+from training.NNDebugCallback import NNDebugCallback
 import cv2
-import numpy
-import hashlib
 import os
-import time
 
 gpus = tf.config.experimental.list_physical_devices('GPU')
 tf.config.experimental.set_virtual_device_configuration(
-          gpus[0], [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=5000)])
+  gpus[0], [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=3 * 1024)]
+)
 
-def dice_coef(y_true, y_pred):
-  y_true_f = K.flatten(y_true)
-  y_pred_f = K.flatten(y_pred)
-  intersection = K.sum(y_true_f * y_pred_f)
-  return (2. * intersection + 1.) / (K.sum(y_true_f) + K.sum(y_pred_f) + 1.)
+from model import MRModel, model_hash, StackedMRModel
+from training.DataGenerator import CDataGenerator
+import tensorflow.keras as keras
+import tensorflow.keras.backend as K
+import time
+
+def dice_coef(y_true, y_pred, eps=0.00001):
+  # (batch, h, w, classes) -> (batch, classes, h, w) 
+  y_true = K.permute_dimensions(y_true, (0, 3, 1, 2))
+  y_pred = K.permute_dimensions(y_pred, (0, 3, 1, 2))
+  
+  axis = [2, 3]
+  intersection = K.sum(y_pred * y_true, axis=axis)
+  sums = (K.sum(y_true, axis=axis) + K.sum(y_pred, axis=axis))
+
+  # standard dice
+  dice = (2. * intersection + eps) / (sums + eps)
+  # weights per class per sample
+#   weights = [.0, .4, .6]
+#   dice = K.sum(dice * weights, axis=-1)
+  # mean over all samples in the batch
+  return K.mean(dice, axis=-1)
 
 def MRModelLoss(y_true, y_pred):
-  return -dice_coef(y_true, y_pred)
+  return 1. - dice_coef(y_true, y_pred)
 
 batch_size = 32
-dims = (240, 240)
+dims = (64, 64)
 
-model = MRModel((*dims, 3), 2)
+model, modelA, modelB = StackedMRModel((*dims, 3), [MRModel((*dims, 3), 2), MRModel((*dims, 3), 2)])
+weightsFile = '../stacked.h5' # % (model_hash(model), *dims)
+if os.path.exists(weightsFile):
+  model.load_weights(weightsFile)
+else:
+  modelA.load_weights('../modelA.h5')
+  modelB.load_weights('../modelB.h5')
+
+for submodel in [modelA, modelB]:
+  submodel.trainable = False
+  for layer in submodel.layers: layer.trainable = False
+
 model.compile(
-  optimizer=keras.optimizers.Adam(lr=0.005),
+  optimizer=keras.optimizers.Adam(lr=0.001),
   loss=MRModelLoss,
   metrics=[]
 )
 
-weightsFile = '../weights_%s_%d_%d.h5' % (model_hash(model), *dims)
-if os.path.exists(weightsFile):
-  model.load_weights(weightsFile)
-
 seed = time.time_ns() # kinda random seed
-dataGen = lambda x: CDataGenerator(x, dims=dims, batchSize=batch_size, batchesPerEpoch=10, seed=seed)
+dataGen = lambda x, bpe: CDataGenerator(x, dims=dims, batchSize=batch_size, batchesPerEpoch=bpe, seed=seed)
 model.fit(
-  x=dataGen('dataset/train'),
-  validation_data=dataGen('dataset/validation'),
+  x=dataGen('dataset/train', 16*4),
+  validation_data=dataGen('dataset/validation', 4*4),
   verbose=2,
   callbacks=[
     keras.callbacks.ModelCheckpoint(
@@ -51,26 +69,25 @@ model.fit(
       monitor='val_loss',
       mode='min',
       verbose=1
+    ),
+    keras.callbacks.ReduceLROnPlateau(
+      monitor='val_loss', factor=0.8,
+      patience=50
+    ),
+    NNDebugCallback(
+      dims=dims,
+      saveFreq=-1,
+      dstFolder='debug/%d' % time.time_ns(),
+      inputs=(
+        cv2.imread('debug/src_input.jpg'),
+        cv2.imread('debug/src_walls.jpg', cv2.IMREAD_GRAYSCALE),
+        cv2.imread('debug/src_unknown.jpg', cv2.IMREAD_GRAYSCALE),
+      )
     )
   ],
-  epochs=250
+  epochs=15000
 )
 
-######
-# debug
-model = MRModel((*dims, 3), 2)
-if os.path.exists(weightsFile):
-  model.load_weights(weightsFile)
-
-testSet = CDataGenerator('dataset/train', dims=dims, batchSize=5, batchesPerEpoch=1)
-X, Y = testSet[1]
-for img, mask in list(zip(X, Y)):
-  cv2.imshow('original', cv2.resize(img, (640, 480)))
-  mask1 = mask[:,  :, 0]
-  cv2.imshow('mask 1', cv2.resize(mask1, (640, 480)))
-  
-  predict = model.predict(numpy.array([img]))[0]
-  predict = numpy.where(0.5 < predict, 1., 0)
-  cv2.imshow('predict', cv2.resize(predict[:, :, 0], (640, 480)))
-  cv2.waitKey(0)
-######
+model.save_weights(
+  '../weights_%s_%d_%d_latest.h5' % (model_hash(model), *dims)
+)

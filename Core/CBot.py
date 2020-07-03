@@ -46,15 +46,18 @@ class CBot:
     dumpMinimap = (win32api.GetAsyncKeyState(ord('T')) & 1) == 1
 
     mapImg = extractGameMap(screenshot)
-    mapMask = self._minimapRecognizer.process(mapImg)
+    mapMaskWalls, mapMaskUnknown = self._minimapRecognizer.process(mapImg)
     if dumpMinimap:
       os.makedirs("minimap", exist_ok=True)
       fname = 'minimap/%d_%%s.jpg' % time.time_ns()
       cv2.imwrite(fname % 'input', mapImg)
-      cv2.imwrite(fname % 'mask', mapMask)
+      cv2.imwrite(fname % 'walls', mapMaskWalls)
+      cv2.imwrite(fname % 'unknown', mapMaskUnknown)
 
-    debug.put('map mask', mapMask)
-    self.navigator.update(mapMask)
+    debug.put('map mask walls', mapMaskWalls)
+    debug.put('map mask unknown', mapMaskUnknown)
+    
+#     self.navigator.update(mapMask)
     
     # TODO: return action for exploring map
     return ([], debug)
