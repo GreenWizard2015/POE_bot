@@ -16,8 +16,8 @@ def diffMap(predict, truth):
   return res
 
 class NNDebugCallback(keras.callbacks.Callback):
-  def __init__(self, dims, saveFreq, dstFolder, inputs):
-    self._dims = dims
+  def __init__(self, model, saveFreq, dstFolder, inputs):
+    self._model = model
     self._best = math.inf
     self._saveFreq = saveFreq
     self._dstFolder = dstFolder
@@ -39,7 +39,7 @@ class NNDebugCallback(keras.callbacks.Callback):
   def dump(self, epoch):
     dest = lambda x: os.path.join(self._dstFolder, '%s_%s.jpg' % (epoch, x))
     
-    recognizer = CMinimapRecognizer(threshold=0.1, dims=self._dims, model=self.model)
+    recognizer = CMinimapRecognizer(threshold=0.1, model=self._model)
     walls, unknown = recognizer.process(self._src)
     
     cv2.imwrite(dest('walls'), diffMap(walls, self._walls))

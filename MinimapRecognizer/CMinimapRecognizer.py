@@ -1,7 +1,5 @@
-from model import MRModel, model_hash, StackedMRModel
 import numpy as np
-import os
-import cv2
+from training.CmrDefaultModel import CmrDefaultModel
 
 def splitRegions(h, w, rh, rw):
   regions = []
@@ -17,17 +15,14 @@ def splitRegions(h, w, rh, rw):
   return regions
 
 class CMinimapRecognizer:
-  def __init__(self, threshold=0.01, dims=None, model=None):
+  def __init__(self, threshold=0.85, model=None):
     self._threshold = threshold
-    self._dims = dims if dims else (64, 64)
-    
     self._model = model
     if not model:
-      dims = self._dims
-      self._model = StackedMRModel((*dims, 3), [MRModel((*dims, 3), 2), MRModel((*dims, 3), 2)])[0]
-      self._model.load_weights(
-        '%s/stacked.h5' % (os.path.dirname(__file__))
-      )
+      self._model = CmrDefaultModel()
+      self._model.load(only_fully_trained=True)
+    
+    self._dims = self._model.input_shape[:2]
     
     self._regions = splitRegions(256, 256, *self._dims)
     self._overlaps = np.zeros((256, 256))
@@ -38,7 +33,7 @@ class CMinimapRecognizer:
     pass
   
   def process(self, minimap):
-    minimap = cv2.cvtColor(minimap, cv2.COLOR_BGR2Lab) / 255. # normalize
+    minimap = self._model.preprocessing(minimap)
     w, h = self._dims
     predictions = self._model.predict(
       np.array([ minimap[x:x+w, y:y+h] for x, y in self._regions ])
@@ -47,7 +42,7 @@ class CMinimapRecognizer:
     maskA = np.zeros((256, 256))
     maskB = np.zeros((256, 256))
     for i, (x, y) in enumerate(self._regions):
-      predicted = predictions[i, :, :, -2:]
+      predicted = predictions[i]
       maskA[x:x+w, y:y+h] += predicted[:, :, 0]
       maskB[x:x+w, y:y+h] += predicted[:, :, 1]
 

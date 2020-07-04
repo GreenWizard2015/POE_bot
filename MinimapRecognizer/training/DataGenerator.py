@@ -67,7 +67,10 @@ class CDataGenerator(Sequence):
     imgWalls[np.where(0 < imgUnknown)] = 0 # just to be sure
     
     ######
-    background = np.where(0 < (imgWalls + imgUnknown), 0, 1).astype(np.float32)
+    # background = np.where(0 < (imgWalls + imgUnknown), 0, 1).astype(np.float32)
+    # always ignored by loss functions, just placeholder
+    background = np.zeros(imgWalls.shape, np.float32)
+    
     mask = np.array([background, imgWalls, imgUnknown]).transpose(1, 2, 0) # (x, w, h) -> (w, h, x)
     y = np.empty((self._batchSize, *self._dims, mask.shape[-1]))
     for i, (x1, y1, x2, y2) in enumerate(crops):

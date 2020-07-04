@@ -43,6 +43,7 @@ def model_hash(model):
   model.summary(print_fn=lambda x: stringlist.append(x))
   return hashlib.md5("".join(stringlist).encode('utf8')).hexdigest()
 
+# TODO: Convert into class
 def StackedMRModel(input_shape, models):
   inputs = layers.Input(shape=input_shape)
   ########
