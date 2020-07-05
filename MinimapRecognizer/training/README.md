@@ -45,3 +45,13 @@ Some example of predictions:
 It seems almost perfect, but there are issues with flickering, noise and misclassification (i.e. any icons, waypoints, etc.). I think, that this is due to a small dataset, especially for icons.
  
 ---
+
+[commit ba0c5097](https://github.com/GreenWizard2015/POE_bot/commit/ba0c509721af5109132aa204bb7da4b8c2be022a) - just added more samples and train again. Loss values weren't impressive, model B reach only ~0.4 scores, some samples recognize with artifacts, but in-game accuracy improved significantly.
+ 
+
+![](images/06072020/1.jpg) | ![](images/06072020/2.jpg)
+---: | ---:
+![](images/06072020/3.jpg) | ![](images/06072020/4.jpg)
+
+---
+
