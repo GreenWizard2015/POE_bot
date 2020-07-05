@@ -16,4 +16,4 @@ class CdgRemoveLayer(Sequence):
 
   def __getitem__(self, index):
     X, y = self._generator[index]
-    return X, np.delete(y, self._layer, -1)
+    return X, np.delete(y, self._layer, 1)
