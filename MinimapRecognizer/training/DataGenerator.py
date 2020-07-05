@@ -71,9 +71,9 @@ class CDataGenerator(Sequence):
     # always ignored by loss functions, just placeholder
     background = np.zeros(imgWalls.shape, np.float32)
     
-    mask = np.array([background, imgWalls, imgUnknown]).transpose(1, 2, 0) # (x, w, h) -> (w, h, x)
-    y = np.empty((self._batchSize, *self._dims, mask.shape[-1]))
+    mask = np.array([background, imgWalls, imgUnknown])
+    y = np.empty((self._batchSize, mask.shape[0], *self._dims))
     for i, (x1, y1, x2, y2) in enumerate(crops):
-      y[i,] = mask[x1:x2, y1:y2]
+      y[i,] = mask[:, x1:x2, y1:y2]
 
     return y

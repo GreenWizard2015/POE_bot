@@ -3,7 +3,6 @@ import tensorflow.keras.backend as K
 def dice_coef(weights=None):
   def calc(y_true, y_pred):
     # (batch, h, w, classes) -> (batch, classes, h, w) 
-    y_true = K.permute_dimensions(y_true, (0, 3, 1, 2))
     y_pred = K.permute_dimensions(y_pred, (0, 3, 1, 2))
     
     axis = [2, 3]
