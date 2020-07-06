@@ -13,7 +13,7 @@ class CDataGenerator(Sequence):
       ) for f in glob('%s/*_input.jpg' % folder)
     ]
     self._batchSize = batchSize
-    self._dims = dims
+    self._dims = np.array(dims)
     self._batchesPerEpoch = batchesPerEpoch
     self._random = Random(seed)
     self._epochBatches = None
@@ -25,29 +25,36 @@ class CDataGenerator(Sequence):
     self._epochBatches = self._random.choices(self._images, k=self._batchesPerEpoch)
     return
 
+  def _addPadding(self, images):
+    pw, ph = self._dims // 2
+    return [
+      cv2.copyMakeBorder(img, ph, ph, pw, pw, cv2.BORDER_REFLECT) for img in images
+    ]
+  
+  def _batchData(self, index):
+    # TODO: Cache images/masks
+    sampleInput, sampleWalls, sampleUnknown = self._epochBatches[index]
+    sampleInput = cv2.cvtColor(cv2.imread(sampleInput), cv2.COLOR_BGR2Lab) / 255 # normalize
+    sampleWalls = cv2.imread(sampleWalls, cv2.IMREAD_GRAYSCALE)
+    sampleUnknown = cv2.imread(sampleUnknown, cv2.IMREAD_GRAYSCALE)
+     
+    return self._addPadding([sampleInput, sampleWalls, sampleUnknown])
+    
   def __len__(self):
     return self._batchesPerEpoch
 
   def __getitem__(self, index):
-    # TODO: Cache images/masks
-    sampleInput, sampleWalls, sampleUnknown = self._epochBatches[index]
-    sampleInput = cv2.cvtColor(cv2.imread(sampleInput), cv2.COLOR_BGR2Lab) / 255 # normalize
-    # TODO: Generate samples on the borders of input (i.e. randint(-cw // 2, w - cw // 2) )
+    sampleInput, sampleWalls, sampleUnknown = self._batchData(index)
     cw, ch = self._dims
-    w, h = np.array([sampleInput.shape[0] - cw, sampleInput.shape[1] - ch])
+    w, h = np.array(sampleInput.shape[:1]) - self._dims
     crops = []
     for _ in range(self._batchSize):
       x = self._random.randint(0, w)
-      y = self._random.randint(0, h) 
+      y = self._random.randint(0, h)
       crops.append((x, y, x + cw, y + ch))
 
     X = self._generate_X(sampleInput, crops)
-    y = self._generate_y(
-      cv2.imread(sampleWalls, cv2.IMREAD_GRAYSCALE),
-      cv2.imread(sampleUnknown, cv2.IMREAD_GRAYSCALE),
-      crops
-    )
-
+    y = self._generate_y(sampleWalls, sampleUnknown, crops)
     return X, y
 
   def _generate_X(self, img, crops):
