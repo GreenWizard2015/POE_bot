@@ -170,7 +170,7 @@ class CDataGenerator(Sequence):
     
     # preprocessing
     #  Fill small holes
-    cv2.GaussianBlur(imgUnknown, (3, 3), 0))
+    cv2.GaussianBlur(imgUnknown, (3, 3), 0)
     imgWalls = np.where(80 < imgWalls, 1, 0).astype(np.float32)
     imgUnknown = np.where(80 < imgUnknown, 1, 0).astype(np.float32)
     
