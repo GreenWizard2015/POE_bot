@@ -3,6 +3,7 @@ from training.NNDebugCallback import NNDebugCallback
 import tensorflow.keras as keras
 import time
 import cv2
+import os
 from training.LearnWeaknessCallback import LearnWeaknessCallback
 
 def commonTrainingLoop(model, batch_size, batch_per_epoch, batch_per_validation):
@@ -18,19 +19,20 @@ def commonTrainingLoop(model, batch_size, batch_per_epoch, batch_per_validation)
     metrics=[]
   )
   
-  seed = time.time_ns() # kinda random seed
+  seed = time.time() # kinda random seed
   dims = model.input_shape[:2]
+  folder = lambda x: os.path.join(os.path.dirname(__file__), x)
   
   trainGenerator = params.DataGenerator(
     CDataGenerator(
-      'dataset/train', dims=dims, 
+      folder('dataset/train'), dims=dims, 
       batchSize=batch_size, batchesPerEpoch=batch_per_epoch, seed=seed
     )
   )
   
   validGenerator = params.DataGenerator(
     CDataGenerator(
-      'dataset/validation', dims=dims,
+      folder('dataset/validation'), dims=dims,
       batchSize=batch_size, batchesPerEpoch=batch_per_validation, seed=seed
     )
   )
@@ -59,11 +61,11 @@ def commonTrainingLoop(model, batch_size, batch_per_epoch, batch_per_validation)
       NNDebugCallback(
         model=model,
         saveFreq=-1,
-        dstFolder='debug/%d' % time.time_ns(),
+        dstFolder=folder('debug/%d' % int(time.time())),
         inputs=(
-          cv2.imread('debug/src_input.jpg'),
-          cv2.imread('debug/src_walls.jpg', cv2.IMREAD_GRAYSCALE),
-          cv2.imread('debug/src_unknown.jpg', cv2.IMREAD_GRAYSCALE),
+          cv2.imread(folder('debug/src_input.jpg')),
+          cv2.imread(folder('debug/src_walls.jpg'), cv2.IMREAD_GRAYSCALE),
+          cv2.imread(folder('debug/src_unknown.jpg'), cv2.IMREAD_GRAYSCALE),
         )
       ),
       LearnWeaknessCallback(
