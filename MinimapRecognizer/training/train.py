@@ -14,8 +14,8 @@ def trainModel(model):
   model.load(only_fully_trained = False, reset=True)
   commonTrainingLoop(
     model,
-    batch_size=128,
-    batch_per_epoch=32,
+    batch_size=32,
+    batch_per_epoch=256,
     batch_per_validation=0.2
   )
   return

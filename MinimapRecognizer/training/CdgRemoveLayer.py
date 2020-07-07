@@ -17,3 +17,12 @@ class CdgRemoveLayer(Sequence):
   def __getitem__(self, index):
     X, y = self._generator[index]
     return X, np.delete(y, self._layer, 1)
+  
+  def forgetWeakness(self):
+    return self._generator.forgetWeakness()
+  
+  def learnWeakness(self, network):
+    return self._generator.learnWeakness(
+      network,
+      trueAdapter=lambda y: np.delete(y, self._layer, 1)
+    )

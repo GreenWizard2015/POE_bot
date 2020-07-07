@@ -3,6 +3,7 @@ from training.NNDebugCallback import NNDebugCallback
 import tensorflow.keras as keras
 import time
 import cv2
+from training.LearnWeaknessCallback import LearnWeaknessCallback
 
 def commonTrainingLoop(model, batch_size, batch_per_epoch, batch_per_validation):
   if isinstance(batch_per_validation, float):
@@ -19,13 +20,24 @@ def commonTrainingLoop(model, batch_size, batch_per_epoch, batch_per_validation)
   
   seed = time.time_ns() # kinda random seed
   dims = model.input_shape[:2]
-  dataGen = lambda x, bpe: params.DataGenerator(
-    CDataGenerator(x, dims=dims, batchSize=batch_size, batchesPerEpoch=bpe, seed=seed)
+  
+  trainGenerator = params.DataGenerator(
+    CDataGenerator(
+      'dataset/train', dims=dims, 
+      batchSize=batch_size, batchesPerEpoch=batch_per_epoch, seed=seed
+    )
+  )
+  
+  validGenerator = params.DataGenerator(
+    CDataGenerator(
+      'dataset/validation', dims=dims,
+      batchSize=batch_size, batchesPerEpoch=batch_per_validation, seed=seed
+    )
   )
   
   model.network.fit(
-    x=dataGen('dataset/train', batch_per_epoch),
-    validation_data=dataGen('dataset/validation', batch_per_validation),
+    x=trainGenerator,
+    validation_data=validGenerator,
     verbose=2,
     callbacks=[
       keras.callbacks.EarlyStopping(
@@ -53,6 +65,10 @@ def commonTrainingLoop(model, batch_size, batch_per_epoch, batch_per_validation)
           cv2.imread('debug/src_walls.jpg', cv2.IMREAD_GRAYSCALE),
           cv2.imread('debug/src_unknown.jpg', cv2.IMREAD_GRAYSCALE),
         )
+      ),
+      LearnWeaknessCallback(
+        model=model, learners=[trainGenerator],
+        patience=50, cooldown=50, rest=20
       )
     ],
     epochs=1000000 # we use EarlyStopping, so just a big number
