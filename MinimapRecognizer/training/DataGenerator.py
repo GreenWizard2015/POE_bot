@@ -9,18 +9,23 @@ from glob import glob
 """ select single image per batch and return random crop of inputDims """
 class CDataGenerator(Sequence):
   def __init__(self, folder, dims, batchSize, batchesPerEpoch, seed, usePadding=False):
-    self._images = [
-      (
-        str(f), str(f).replace('_input.jpg', '_walls.jpg'), str(f).replace('_input.jpg', '_unknown.jpg'),
-        [ None ] # placeholder for distribution
-      ) for f in glob('%s/*_input.jpg' % folder)
-    ]
     self._usePadding = usePadding
     self._batchSize = batchSize
     self._dims = np.array(dims)
     self._batchesPerEpoch = batchesPerEpoch
     self._random = Random(seed)
     self._epochBatches = None
+    
+    self._images = [
+      (
+        self._loadInput(f), 
+        self._loadMasks(
+          str(f).replace('_input.jpg', '_walls.jpg'),
+          str(f).replace('_input.jpg', '_unknown.jpg')
+        ),
+        [ None ] # placeholder for distribution
+      ) for f in glob('%s/*_input.jpg' % folder)
+    ]
     self.on_epoch_end()
     return 
 
@@ -31,23 +36,11 @@ class CDataGenerator(Sequence):
     """Updates after each epoch"""
     self._epochBatches = self._random.choices(self._images, k=self._batchesPerEpoch)
     return
-
-  def _addPadding(self, images):
-    if not self._usePadding: return images
-
-    pw, ph = self._dims // 2
-    return [
-      cv2.copyMakeBorder(img, ph, ph, pw, pw, cv2.BORDER_CONSTANT, 0) for img in images
-    ]
   
   def _batchData(self, data):
-    # TODO: Cache images/masks
-    sampleInput, sampleWalls, sampleUnknown, distribution = data
-    sampleInput = cv2.cvtColor(cv2.imread(sampleInput), cv2.COLOR_BGR2Lab) / 255 # normalize
-    sampleWalls = cv2.imread(sampleWalls, cv2.IMREAD_GRAYSCALE)
-    sampleUnknown = cv2.imread(sampleUnknown, cv2.IMREAD_GRAYSCALE)
-     
-    return (*self._addPadding([sampleInput, sampleWalls, sampleUnknown]), distribution[0]) 
+    sampleInput, masks, distribution = data
+    sampleWalls, sampleUnknown = masks
+    return (sampleInput, sampleWalls, sampleUnknown, distribution[0])
 
   def _generateCrops(self, dims, N=None, distribution=None):
     N = N if N else self._batchSize
@@ -81,13 +74,6 @@ class CDataGenerator(Sequence):
     return X
 
   def _generate_y(self, imgWalls, imgUnknown, crops):
-    # preprocessing
-    cv2.GaussianBlur(imgUnknown, (5, 5), 0)
-    imgWalls = np.where(80 < imgWalls, 1, 0).astype(np.float32)
-    imgUnknown = np.where(80 < imgUnknown, 1, 0).astype(np.float32)
-    
-    imgWalls[np.where(0 < imgUnknown)] = 0 # just to be sure
-    
     ######
     # background = np.where(0 < (imgWalls + imgUnknown), 0, 1).astype(np.float32)
     # always ignored by loss functions, just placeholder
@@ -102,7 +88,7 @@ class CDataGenerator(Sequence):
 
   def forgetWeakness(self):
     for sample in self._images:
-      sample[3][0] = None # remove old distribution
+      sample[2][0] = None # remove old distribution
 
   def learnWeakness(self, network, topK=5, regionsN=32, trueAdapter=None):
     '''
@@ -156,9 +142,38 @@ class CDataGenerator(Sequence):
       ]
       
       worst = sorted(zip(losses, crops), key=lambda x: x[0][0], reverse=True)[:5] 
-      sample[3][0] = np.cumsum(
+      sample[2][0] = np.cumsum(
         errorsDistribution(worst, np.array(sampleInput.shape[:2])),
         axis=-1
       )
 
     return
+  
+  ###########################
+  def _addPadding(self, images):
+    if not self._usePadding: return images
+
+    pw, ph = self._dims // 2
+    return [
+      cv2.copyMakeBorder(img, ph, ph, pw, pw, cv2.BORDER_CONSTANT, 0) for img in images
+    ]
+
+  def _loadInput(self, src):
+    sample = cv2.cvtColor(cv2.imread(src), cv2.COLOR_BGR2Lab) / 255 # normalize
+    return self._addPadding([sample])[0]
+
+  def _loadMasks(self, srcWalls, srcUnknown):
+    imgWalls, imgUnknown = self._addPadding([
+      cv2.imread(srcWalls, cv2.IMREAD_GRAYSCALE),
+      cv2.imread(srcUnknown, cv2.IMREAD_GRAYSCALE)
+    ])
+    
+    # preprocessing
+    #  Fill small holes
+    cv2.GaussianBlur(imgUnknown, (3, 3), 0))
+    imgWalls = np.where(80 < imgWalls, 1, 0).astype(np.float32)
+    imgUnknown = np.where(80 < imgUnknown, 1, 0).astype(np.float32)
+    
+    imgWalls[np.where(0 < cv2.GaussianBlur(imgUnknown.copy(), (3, 3), 0))] = 0 # just to be sure
+    
+    return [imgWalls, imgUnknown]
