@@ -1,7 +1,8 @@
 import sys
+import os
 import tensorflow as tf
 
-if 'google.colab' in sys.modules:
+if 'COLAB_GPU' in os.environ:
   # fix resolve modules
   from os.path import dirname
   sys.path.append(dirname(dirname(__file__)))
