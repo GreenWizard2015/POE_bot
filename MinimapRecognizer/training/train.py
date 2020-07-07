@@ -1,9 +1,15 @@
+import sys
 import tensorflow as tf
 
-gpus = tf.config.experimental.list_physical_devices('GPU')
-tf.config.experimental.set_virtual_device_configuration(
-  gpus[0], [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=5 * 1024)]
-)
+if 'google.colab' in sys.modules:
+  # fix resolve modules
+  from os.path import dirname
+  sys.path.append(dirname(dirname(__file__)))
+else: # local GPU
+  gpus = tf.config.experimental.list_physical_devices('GPU')
+  tf.config.experimental.set_virtual_device_configuration(
+    gpus[0], [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=5 * 1024)]
+  )
 
 from training.commonTrainingLoop import commonTrainingLoop
 from training.CmrModelA import CmrModelA
