@@ -22,7 +22,7 @@ def trainModel(model):
   commonTrainingLoop(
     model,
     batch_size=32,
-    batch_per_epoch=256,
+    batch_per_epoch=32,
     batch_per_validation=0.2
   )
   return

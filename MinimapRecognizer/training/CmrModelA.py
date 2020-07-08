@@ -13,7 +13,7 @@ class CmrModelA:
   
   @property
   def input_shape(self):
-    return (64, 64, 3)
+    return (256, 256, 3)
   
   @property
   def weights_file(self):

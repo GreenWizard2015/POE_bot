@@ -8,7 +8,7 @@ from glob import glob
 # TODO: CDataGenerator must work only with squared regions/input of constant size 
 """ select single image per batch and return random crop of inputDims """
 class CDataGenerator(Sequence):
-  def __init__(self, folder, dims, batchSize, batchesPerEpoch, seed, usePadding=False):
+  def __init__(self, folder, dims, batchSize, batchesPerEpoch, seed, usePadding=True):
     self._usePadding = usePadding
     self._batchSize = batchSize
     self._dims = np.array(dims)
@@ -155,7 +155,7 @@ class CDataGenerator(Sequence):
 
     pw, ph = self._dims // 2
     return [
-      cv2.copyMakeBorder(img, ph, ph, pw, pw, cv2.BORDER_CONSTANT, 0) for img in images
+      cv2.copyMakeBorder(img, ph, ph, pw, pw, cv2.BORDER_REFLECT) for img in images
     ]
 
   def _loadInput(self, src):
