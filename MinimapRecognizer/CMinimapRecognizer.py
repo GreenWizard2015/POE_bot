@@ -1,18 +1,6 @@
 import numpy as np
 from training.CmrDefaultModel import CmrDefaultModel
-
-def splitRegions(h, w, rh, rw):
-  regions = []
-  for x in range(0, 1 + w - rw, rw):
-    for y in range(0, 1 + h - rh, rh):
-      regions.append((x, y))
-  
-  if (0 < (w % rw)) or (0 < (h % rh)):
-    for pt in ((w - rw, 0), (w - rw, h - rh)):
-      if pt not in regions:
-        regions.append(pt)
-
-  return regions
+from splitRegions import splitRegions
 
 class CMinimapRecognizer:
   def __init__(self, threshold=0.85, model=None):
