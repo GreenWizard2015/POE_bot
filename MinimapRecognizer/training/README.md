@@ -55,3 +55,18 @@ It seems almost perfect, but there are issues with flickering, noise and misclas
 
 ---
 
+[commit 872063b2](https://github.com/GreenWizard2015/POE_bot/commit/872063b26f752d3ea61bcee80c6c4d33c6c879cb) - added simple images padding. I used cv2.BORDER_REFLECT, so it creating big variability of valid samples. I'm not using rotations and other typical augmentations, because it may damage minimap contours.
+
+---
+
+[commit 872063b2](https://github.com/GreenWizard2015/POE_bot/commit/872063b26f752d3ea61bcee80c6c4d33c6c879cb) - introduced "Weakness learning" algorithm. I can’t say for sure, but, at first glance, the speed of learning sometimes doubles. The accuracy is almost unchanged, but this is most likely because the network is too small. I do not want to increase complexity of the network because I am almost satisfied with the result. Also, the dataset is too small, which limits the possibilities for learning.
+
+---
+
+[commit 323b77c7](https://github.com/GreenWizard2015/POE_bot/commit/323b77c71a524bf84e3a0c5a186a808bf032eea8) - train the network for 256x256 input. Kinda milestone, because there are only 27 examples in the dataset with a size of 256 * 256 and you cannot get more examples by simple cropping. Paddings and reflections, however, might not give enough relevant examples.
+
+![](images/323b77c7/1.jpg) | ![](images/323b77c7/2.jpg)
+---: | ---:
+![](images/323b77c7/3.jpg) | ![](images/323b77c7/4.jpg)
+
+There were also more successful versions of the network, with fewer errors, but it is already playing with randomness. To further improve the work, it is necessary to expand the dataset and change architecture of the network. To further improve the work, it is necessary to expand the dataset and change the network architecture.

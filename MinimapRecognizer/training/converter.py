@@ -25,7 +25,7 @@ for src in glob.glob(srcFolder + '*_input.jpg'):
   cv2.imwrite(dest('walls'), walls)
   cv2.imwrite(dest('unknown'), unknown)
   
-  img[numpy.where(0 < walls)] = [0, 255, 0]
+  img[numpy.where(0 < walls)] = [255, 255, 0]
   img[numpy.where(0 < unknown)] = [0, 0, 255]
   cv2.imwrite(dest('masked'), img)
   pass
