@@ -57,7 +57,7 @@ class CDataGenerator(Sequence):
     w, h = np.array(dims) - self._dims
     # always include original (0, 0)
     originPt = self._dims // 2
-    crops = [tuple(*originPt, *(originPt + self._dims))]
+    crops = [(*originPt, *(originPt + self._dims))]
     for _ in range(2 * N):
       x, y = self._randomPoint(w, h, distribution)
       crop = (x, y, x + cw, y + ch)
