@@ -1,21 +1,13 @@
-from .model import StackedMRModel
 import os
 import cv2
 from .losses import MulticlassDiceLoss
-from .CmrModelA import CmrModelA
-from .CmrModelB import CmrModelB
+from training.model import MRNetwork
 
 class CmrDefaultModel:
   def __init__(self):
     input_shape = self.input_shape
     
-    self.subnetA = CmrModelA()
-    self.subnetB = CmrModelB()
-    
-    self.network, _, _ = StackedMRModel(
-      input_shape,
-      [self.subnetA.network, self.subnetB.network]
-    )
+    self.network = MRNetwork(input_shape)
     return
   
   @property
@@ -36,12 +28,7 @@ class CmrDefaultModel:
     else:
       if only_fully_trained:
         raise Exception('There is no fully trained model Stacked.')
-      
-      self.subnetA.load(only_fully_trained=True)
-      self.subnetB.load(only_fully_trained=True)
 
-    self.subnetA.lock()
-    self.subnetB.lock()
     return True
 
   def trainingParams(self):

@@ -19,8 +19,7 @@ def upsamplingBlock(prev, shortcut, sz, filters):
    
   return convBlock(concatenated, sz, filters)
 
-# TODO: Convert into class
-def MRModel(input_shape, num_classes):
+def MRSubNetwork(input_shape, num_classes):
   res = inputs = layers.Input(shape=input_shape)
   
   convA, res = downsamplingBlockWithLink(res, 3, 4)
@@ -43,13 +42,10 @@ def model_hash(model):
   model.summary(print_fn=lambda x: stringlist.append(x))
   return hashlib.md5("".join(stringlist).encode('utf8')).hexdigest()
 
-# TODO: Convert into class
-def StackedMRModel(input_shape, models):
+def MRNetwork(input_shape):
   inputs = layers.Input(shape=input_shape)
   ########
-  for model in models:
-    model.trainable = False
-    for layer in model.layers: layer.trainable = False
+  models = [MRSubNetwork(input_shape, 2), MRSubNetwork(input_shape, 2)]
   modelsOut = [model(inputs) for model in models]
   
   res = layers.Concatenate()([inputs, *modelsOut])
@@ -64,7 +60,7 @@ def StackedMRModel(input_shape, models):
   res = upsamplingBlock(res, convB, 3, 4)
   res = upsamplingBlock(res, convA, 3, 4)
 
-  return (keras.Model(
+  return keras.Model(
     inputs=inputs,
     outputs=layers.Conv2D(3, 1, activation='softmax', padding='same')(res)
-  ), *models)
+  )

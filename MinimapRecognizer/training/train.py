@@ -13,8 +13,6 @@ else: # local GPU
   )
 
 from training.commonTrainingLoop import commonTrainingLoop
-from training.CmrModelA import CmrModelA
-from training.CmrModelB import CmrModelB
 from training.CmrDefaultModel import CmrDefaultModel
 
 def trainModel(model):
@@ -28,7 +26,4 @@ def trainModel(model):
   return
 
 ########################
-# train all NN from zero
-trainModel(CmrModelA())
-trainModel(CmrModelB())
 trainModel(CmrDefaultModel())
