@@ -90,7 +90,7 @@ class CDataGenerator(Sequence):
     for sample in self._images:
       sample[2][0] = None # remove old distribution
 
-  def learnWeakness(self, network, topK=5, regionsN=32, trueAdapter=None):
+  def learnWeakness(self, network, topK, regionsN, trueAdapter=None):
     '''
       Very dark magic, forbidden from the first days of the Universe.
       We trying to find out the weaknesses of the network and hit them ofter.
