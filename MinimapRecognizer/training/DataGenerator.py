@@ -42,18 +42,29 @@ class CDataGenerator(Sequence):
     sampleWalls, sampleUnknown = masks
     return (sampleInput, sampleWalls, sampleUnknown, distribution[0])
 
+  def _randomPoint(self, w, h, distribution):
+    if distribution is not None:
+      x = self._random.choices(np.arange(0, w), cum_weights=distribution[0], k=1)[0]
+      y = self._random.choices(np.arange(0, h), cum_weights=distribution[1], k=1)[0]
+    else:
+      x = self._random.randint(0, w)
+      y = self._random.randint(0, h)
+    return (x, y)
+    
   def _generateCrops(self, dims, N=None, distribution=None):
     N = N if N else self._batchSize
     cw, ch = self._dims
     w, h = np.array(dims) - self._dims
-    crops = []
-    for _ in range(N):
-      if distribution is not None:
-        x = self._random.choices(np.arange(0, w), cum_weights=distribution[0], k=1)[0]
-        y = self._random.choices(np.arange(0, h), cum_weights=distribution[1], k=1)[0]
-      else:
-        x = self._random.randint(0, w)
-        y = self._random.randint(0, h)
+    # always include original (0, 0) 
+    crops = [tuple(self._dims // 2)]
+    for _ in range(2 * N):
+      x, y = self._randomPoint(w, h, distribution)
+      crop = (x, y, x + cw, y + ch)
+      if crop not in crops: # only unique crops
+        crops.append(crop)
+    # fill by random crops, if there is a space
+    while len(crops) < N:
+      x, y = self._randomPoint(w, h, distribution)
       crops.append((x, y, x + cw, y + ch))
     return crops
     
