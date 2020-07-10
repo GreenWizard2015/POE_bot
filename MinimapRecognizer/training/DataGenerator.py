@@ -55,8 +55,9 @@ class CDataGenerator(Sequence):
     N = N if N else self._batchSize
     cw, ch = self._dims
     w, h = np.array(dims) - self._dims
-    # always include original (0, 0) 
-    crops = [tuple(self._dims // 2)]
+    # always include original (0, 0)
+    originPt = self._dims // 2
+    crops = [tuple(*originPt, *(originPt + self._dims))]
     for _ in range(2 * N):
       x, y = self._randomPoint(w, h, distribution)
       crop = (x, y, x + cw, y + ch)
