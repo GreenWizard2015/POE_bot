@@ -2,6 +2,7 @@ import os
 import cv2
 from .losses import MulticlassDiceLoss
 from training.model import MRNetwork
+from tensorflow import keras
 
 class CmrDefaultModel:
   def __init__(self):
@@ -48,11 +49,22 @@ class CmrdTrainingParameters:
     return
   
   def loss(self):
-    return MulticlassDiceLoss(weights=[
+    weights=[
       0., # background totally ignored
-      .4, # we have much more walls, so they are less important
-      .6  # prioritize undiscovered areas  
-    ])
+      .2, # we have much more walls, so they are less important
+      .8  # prioritize undiscovered areas  
+    ]
+    dice = MulticlassDiceLoss(weights)
+    ce = keras.losses.CategoricalCrossentropy(from_logits=False)
+    def calc(y_true, y_pred):
+      dloss = dice(y_true, y_pred)
+      celoss = ce(
+        y_true,
+        keras.backend.permute_dimensions(y_pred, (0, 3, 1, 2))
+      )
+      
+      return keras.backend.sum(dloss * celoss)
+    return calc
 
   def DataGenerator(self, generator):
     return generator
