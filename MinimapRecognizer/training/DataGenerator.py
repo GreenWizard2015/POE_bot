@@ -58,15 +58,15 @@ class CDataGenerator(Sequence):
     # always include original (0, 0)
     originPt = self._dims // 2
     crops = [(*originPt, *(originPt + self._dims))]
-    for _ in range(2 * N):
+
+    attempt = 2 * N
+    while len(crops) < N:
+      attempt -= 1
       x, y = self._randomPoint(w, h, distribution)
       crop = (x, y, x + cw, y + ch)
-      if crop not in crops: # only unique crops
+      if (0 < attempt) or (crop not in crops):
         crops.append(crop)
-    # fill by random crops, if there is a space
-    while len(crops) < N:
-      x, y = self._randomPoint(w, h, distribution)
-      crops.append((x, y, x + cw, y + ch))
+
     return crops
     
   def __getitem__(self, index):
