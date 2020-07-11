@@ -86,11 +86,7 @@ class CDataGenerator(Sequence):
     return X
 
   def _generate_y(self, imgWalls, imgUnknown, crops):
-    ######
-    # background = np.where(0 < (imgWalls + imgUnknown), 0, 1).astype(np.float32)
-    # always ignored by loss functions, just placeholder
-    background = np.zeros(imgWalls.shape, np.float32)
-    
+    background = np.where(0 < (imgWalls + imgUnknown), 0, 1).astype(np.float32)
     mask = np.array([background, imgWalls, imgUnknown])
     y = np.empty((len(crops), mask.shape[0], *self._dims))
     for i, (x1, y1, x2, y2) in enumerate(crops):

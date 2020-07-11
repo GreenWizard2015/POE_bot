@@ -37,6 +37,12 @@ def commonTrainingLoop(model, batch_size, batch_per_epoch, batch_per_validation)
     )
   )
   
+  # create folder for weights
+  os.makedirs(
+    os.path.dirname(model.weights_file),
+    exist_ok=True
+  )
+  
   model.network.fit(
     x=trainGenerator,
     validation_data=validGenerator,
@@ -71,8 +77,8 @@ def commonTrainingLoop(model, batch_size, batch_per_epoch, batch_per_validation)
       # heavily exploit weakness  
       LearnWeaknessCallback(
         model=model, learners=[trainGenerator],
-        patience=1, cooldown=20, rest=10,
-        topK=16, regionsN=64
+        patience=1, cooldown=20, rest=5,
+        topK=1, regionsN=64
       )
     ],
     epochs=1000000 # we use EarlyStopping, so just a big number

@@ -20,7 +20,7 @@ class CmrDefaultModel:
     return os.path.join(
       os.path.dirname(os.path.dirname(__file__)),
       'weights',
-      'stacked.h5'
+      'main.h5'
     )
 
   def load(self, only_fully_trained, reset=False):
@@ -49,21 +49,13 @@ class CmrdTrainingParameters:
     return
   
   def loss(self):
-    weights=[
-      0., # background totally ignored
-      .2, # we have much more walls, so they are less important
-      .8  # prioritize undiscovered areas  
-    ]
-    dice = MulticlassDiceLoss(weights)
-    ce = keras.losses.CategoricalCrossentropy(from_logits=False)
+    dice = MulticlassDiceLoss(weights=[1., 1., 1.])
     def calc(y_true, y_pred):
-      dloss = dice(y_true, y_pred)
-      celoss = ce(
+      dloss = dice(
         y_true,
-        keras.backend.permute_dimensions(y_pred, (0, 3, 1, 2))
+        keras.backend.pow(y_pred, 2) # push "down" predictions
       )
-      
-      return keras.backend.sum(dloss * celoss)
+      return dloss
     return calc
 
   def DataGenerator(self, generator):
