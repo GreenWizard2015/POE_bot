@@ -129,6 +129,11 @@ class CDataGenerator(Sequence):
       distribution = np.array([ distribution[0, (cw // 2):(-cw // 2)], distribution[1, (ch // 2):(-ch // 2)] ])
       # crop buttom-right
       distribution = distribution[:, :-ch]
+      # normalize to range 1..2
+      eps = 1e-13
+      m = np.max(distribution, axis=-1) - 1  + eps
+      distribution = 1. + np.power((distribution - 1. + eps) / m[:, np.newaxis], 2)
+      
       return distribution
     #############
     samples = self._random.sample(
