@@ -10,11 +10,11 @@ def convBlock(prev, sz, filters):
 
 def downsamplingBlockWithLink(prev, sz, filters):
   link = convBlock(prev, sz, filters)
-  res = layers.MaxPooling2D(pool_size=(2,2), strides=2, padding="same")(link)
+  res = layers.Convolution2D(1, (2,2), strides=2, padding="same")(link)
   return link, res
   
 def upsamplingBlock(prev, shortcut, sz, filters):
-  prev = layers.UpSampling2D((2, 2), interpolation="nearest")(prev)
+  prev = layers.Convolution2DTranspose(1, (2, 2), strides=2)(prev)
   concatenated = layers.Concatenate()([prev, shortcut])
    
   return convBlock(concatenated, sz, filters)
