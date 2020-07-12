@@ -10,32 +10,14 @@ def convBlock(prev, sz, filters):
 
 def downsamplingBlockWithLink(prev, sz, filters):
   link = convBlock(prev, sz, filters)
-  res = layers.Convolution2D(1, (2,2), strides=2, padding="same")(link)
+  res = layers.Convolution2D(filters, (2,2), strides=2, padding="same")(link)
   return link, res
   
 def upsamplingBlock(prev, shortcut, sz, filters):
-  prev = layers.Convolution2DTranspose(1, (2, 2), strides=2)(prev)
+  prev = layers.Convolution2DTranspose(filters, (2, 2), strides=2)(prev)
   concatenated = layers.Concatenate()([prev, shortcut])
    
   return convBlock(concatenated, sz, filters)
-
-def MRSubNetwork(input_shape, num_classes):
-  res = inputs = layers.Input(shape=input_shape)
-  
-  convA, res = downsamplingBlockWithLink(res, 3, 4)
-  convB, res = downsamplingBlockWithLink(res, 3, 4)
-  convC, res = downsamplingBlockWithLink(res, 3, 4)
-  
-  res = convBlock(res, 3, 4)
-  
-  res = upsamplingBlock(res, convC, 3, 4)
-  res = upsamplingBlock(res, convB, 3, 4)
-  res = upsamplingBlock(res, convA, 3, 4)
-
-  return keras.Model(
-    inputs=inputs,
-    outputs=layers.Conv2D(num_classes, 1, activation='softmax', padding='same')(res)
-  )
  
 def model_hash(model):
   stringlist = []
@@ -43,21 +25,18 @@ def model_hash(model):
   return hashlib.md5("".join(stringlist).encode('utf8')).hexdigest()
 
 def MRNetwork(input_shape):
-  inputs = layers.Input(shape=input_shape)
-  ########
-  models = [MRSubNetwork(input_shape, 2), MRSubNetwork(input_shape, 2)]
-  modelsOut = [model(inputs) for model in models]
+  res = inputs = layers.Input(shape=input_shape)
   
-  res = layers.Concatenate()([inputs, *modelsOut])
-  ########
   convA, res = downsamplingBlockWithLink(res, 3, 4)
-  convB, res = downsamplingBlockWithLink(res, 3, 4)
-  convC, res = downsamplingBlockWithLink(res, 3, 4)
+  convB, res = downsamplingBlockWithLink(res, 3, 8)
+  convC, res = downsamplingBlockWithLink(res, 3, 16)
+  convD, res = downsamplingBlockWithLink(res, 3, 24)
   
-  res = convBlock(res, 3, 4)
+  res = convBlock(res, 3, 32)
   
-  res = upsamplingBlock(res, convC, 3, 4)
-  res = upsamplingBlock(res, convB, 3, 4)
+  res = upsamplingBlock(res, convD, 3, 24)
+  res = upsamplingBlock(res, convC, 3, 16)
+  res = upsamplingBlock(res, convB, 3, 8)
   res = upsamplingBlock(res, convA, 3, 4)
 
   return keras.Model(
