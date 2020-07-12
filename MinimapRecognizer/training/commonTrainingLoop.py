@@ -78,7 +78,7 @@ def commonTrainingLoop(model, batch_size, batch_per_epoch, batch_per_validation)
       LearnWeaknessCallback(
         model=model, learners=[trainGenerator],
         patience=1, cooldown=20, rest=5,
-        topK=1, regionsN=64
+        topK=16, regionsN=64
       )
     ],
     epochs=1000000 # we use EarlyStopping, so just a big number
