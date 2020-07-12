@@ -18,9 +18,10 @@ def dice_coef(weights=None):
 
 def MulticlassDiceLoss(weights):
   diceCoef = dice_coef(weights)
+  total = sum(weights)
   def calc(y_true, y_pred):
     # (batch, h, w, classes) -> (batch, classes, h, w)
     y_pred = K.permute_dimensions(y_pred, (0, 3, 1, 2))
-    return 1. - diceCoef(y_true, y_pred)
+    return (total - diceCoef(y_true, y_pred)) / total
 
   return calc
