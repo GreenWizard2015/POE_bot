@@ -6,7 +6,7 @@
 
 The ultimate goal of the project can be formulated as follows:
 
-> The bot should be able to explore any solid map (without teleporters, additional zones, ignoring quests and event triggers), avoid enemy attacks and respond to them.
+> The bot should be able to explore any solid map (without teleports, additional zones, ignoring quests and event triggers), avoid enemies attacks and respond to them.
 > 
 > The bot should use only the image of the game process, without hacking the game, its resources, and using the previously collected information about the cards.
 
