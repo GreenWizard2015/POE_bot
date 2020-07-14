@@ -42,19 +42,31 @@ class CDataGenerator(Sequence):
     sampleWalls, sampleUnknown = masks
     return (sampleInput, sampleWalls, sampleUnknown, distribution[0])
 
+  def _randomPoint(self, w, h, distribution):
+    if distribution is not None:
+      x = self._random.choices(np.arange(0, w), cum_weights=distribution[0], k=1)[0]
+      y = self._random.choices(np.arange(0, h), cum_weights=distribution[1], k=1)[0]
+    else:
+      x = self._random.randint(0, w)
+      y = self._random.randint(0, h)
+    return (x, y)
+    
   def _generateCrops(self, dims, N=None, distribution=None):
     N = N if N else self._batchSize
     cw, ch = self._dims
     w, h = np.array(dims) - self._dims
-    crops = []
-    for _ in range(N):
-      if distribution is not None:
-        x = self._random.choices(np.arange(0, w), cum_weights=distribution[0], k=1)[0]
-        y = self._random.choices(np.arange(0, h), cum_weights=distribution[1], k=1)[0]
-      else:
-        x = self._random.randint(0, w)
-        y = self._random.randint(0, h)
-      crops.append((x, y, x + cw, y + ch))
+    # always include original (0, 0)
+    originPt = self._dims // 2
+    crops = [(*originPt, *(originPt + self._dims))]
+
+    attempt = 2 * N
+    while len(crops) < N:
+      attempt -= 1
+      x, y = self._randomPoint(w, h, distribution)
+      crop = (x, y, x + cw, y + ch)
+      if (0 < attempt) or (crop not in crops):
+        crops.append(crop)
+
     return crops
     
   def __getitem__(self, index):
@@ -74,11 +86,7 @@ class CDataGenerator(Sequence):
     return X
 
   def _generate_y(self, imgWalls, imgUnknown, crops):
-    ######
-    # background = np.where(0 < (imgWalls + imgUnknown), 0, 1).astype(np.float32)
-    # always ignored by loss functions, just placeholder
-    background = np.zeros(imgWalls.shape, np.float32)
-    
+    background = np.where(0 < (imgWalls + imgUnknown), 0, 1).astype(np.float32)
     mask = np.array([background, imgWalls, imgUnknown])
     y = np.empty((len(crops), mask.shape[0], *self._dims))
     for i, (x1, y1, x2, y2) in enumerate(crops):
@@ -90,7 +98,7 @@ class CDataGenerator(Sequence):
     for sample in self._images:
       sample[2][0] = None # remove old distribution
 
-  def learnWeakness(self, network, topK=5, regionsN=32, trueAdapter=None):
+  def learnWeakness(self, network, topK, regionsN, trueAdapter=None):
     '''
       Very dark magic, forbidden from the first days of the Universe.
       We trying to find out the weaknesses of the network and hit them ofter.
@@ -121,6 +129,11 @@ class CDataGenerator(Sequence):
       distribution = np.array([ distribution[0, (cw // 2):(-cw // 2)], distribution[1, (ch // 2):(-ch // 2)] ])
       # crop buttom-right
       distribution = distribution[:, :-ch]
+      # normalize to range 1..2
+      eps = 1e-13
+      m = np.max(distribution, axis=-1) - 1  + eps
+      distribution = 1. + np.power((distribution - 1. + eps) / m[:, np.newaxis], 2)
+      
       return distribution
     #############
     samples = self._random.sample(

@@ -2,7 +2,7 @@ import tensorflow.keras as keras
 import math
 
 class LearnWeaknessCallback(keras.callbacks.Callback):
-  def __init__(self, model, learners, patience, cooldown, rest):
+  def __init__(self, model, learners, patience, cooldown, rest, topK, regionsN):
     self._model = model
     self._learners = learners
     self._patience = patience
@@ -13,6 +13,9 @@ class LearnWeaknessCallback(keras.callbacks.Callback):
     self._lastBreakdown = 0
     self._lastLW = 0
     self._weaknessActive = False
+
+    self._topK = topK
+    self._regionsN = regionsN
     pass
   
   def on_epoch_end(self, epoch, logs=None):
@@ -36,7 +39,7 @@ class LearnWeaknessCallback(keras.callbacks.Callback):
     
     print('Start learning weakness.')
     for l in self._learners:
-      l.learnWeakness(self._model.network)
+      l.learnWeakness(self._model.network, topK=self._topK, regionsN=self._regionsN)
     self._weaknessActive = True
     print('Done learning weakness.')
     

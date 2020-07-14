@@ -1,21 +1,14 @@
-from .model import StackedMRModel
 import os
 import cv2
 from .losses import MulticlassDiceLoss
-from .CmrModelA import CmrModelA
-from .CmrModelB import CmrModelB
+from training.model import MRNetwork
+from tensorflow import keras
 
 class CmrDefaultModel:
   def __init__(self):
     input_shape = self.input_shape
     
-    self.subnetA = CmrModelA()
-    self.subnetB = CmrModelB()
-    
-    self.network, _, _ = StackedMRModel(
-      input_shape,
-      [self.subnetA.network, self.subnetB.network]
-    )
+    self.network = MRNetwork(input_shape)
     return
   
   @property
@@ -27,7 +20,7 @@ class CmrDefaultModel:
     return os.path.join(
       os.path.dirname(os.path.dirname(__file__)),
       'weights',
-      'stacked.h5'
+      'main.h5'
     )
 
   def load(self, only_fully_trained, reset=False):
@@ -36,12 +29,7 @@ class CmrDefaultModel:
     else:
       if only_fully_trained:
         raise Exception('There is no fully trained model Stacked.')
-      
-      self.subnetA.load(only_fully_trained=True)
-      self.subnetB.load(only_fully_trained=True)
 
-    self.subnetA.lock()
-    self.subnetB.lock()
     return True
 
   def trainingParams(self):
@@ -61,11 +49,14 @@ class CmrdTrainingParameters:
     return
   
   def loss(self):
-    return MulticlassDiceLoss(weights=[
-      0., # background totally ignored
-      .4, # we have much more walls, so they are less important
-      .6  # prioritize undiscovered areas  
-    ])
+    dice = MulticlassDiceLoss(weights=[1., 1., 1.])
+    def calc(y_true, y_pred):
+      dloss = dice(
+        y_true,
+        keras.backend.pow(y_pred, 2) # push "down" predictions
+      )
+      return dloss
+    return calc
 
   def DataGenerator(self, generator):
     return generator
