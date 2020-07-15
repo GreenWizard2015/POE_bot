@@ -12,7 +12,7 @@ DataGenerator.py - data generator for training.
 
 CmrDefaultModel.py - wrapper class for NN.
 
-MinimapRecognizer_colab.ipynb - notebook, that can be [opened]() in Google Colab and train NN on their GPU. 
+MinimapRecognizer_colab.ipynb - notebook, that can be [opened](https://colab.research.google.com/github/GreenWizard2015/POE_bot/blob/master/MinimapRecognizer/training/MinimapRecognizer_colab.ipynb) in Google Colab and train NN on their GPU. 
 
 converter.py - script that takes `../../minimap/*_input.jpg`, apply to them `CMinimapRecognizer` and save results into `output` folder.
 
