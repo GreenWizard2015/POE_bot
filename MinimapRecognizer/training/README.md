@@ -84,3 +84,20 @@ There were also more successful versions of the network, with fewer errors, but 
 ![](images/2c422268/3.jpg) | ![](images/2c422268/4.jpg)
 
 Not perfect, but further attempts to increase accuracy are not practical.
+
+
+---
+
+[commit f37aed31](https://github.com/GreenWizard2015/POE_bot/commit/f37aed318234665d81ed323012b758a94836099f) - trained a neural network with new examples that were recognized with errors.
+
+Examples:
+
+Before | After
+---: | ---:
+![](images/f37aed31/1_before.jpg) | ![](images/f37aed31/1_after.jpg)
+---: | ---:
+![](images/f37aed31/2_before.jpg) | ![](images/f37aed31/2_after.jpg)
+---: | ---:
+![](images/f37aed31/3_before.jpg) | ![](images/f37aed31/3_after.jpg)
+---: | ---:
+![](images/f37aed31/4_before.jpg) | ![](images/f37aed31/4_after.jpg)
