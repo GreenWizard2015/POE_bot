@@ -16,7 +16,7 @@ Estimated development plan:
 
 - Reading the current state of the minimap. ([MinimapRecognizer](https://github.com/GreenWizard2015/POE_bot/tree/master/MinimapRecognizer))
 
-- Combining multiple minimap states into one global map.
+- Combining multiple minimap states into one global map. ([GlobalMap](https://github.com/GreenWizard2015/POE_bot/tree/master/GlobalMap))
 
 - Building a step-by-step strategy for exploring the global map.
 

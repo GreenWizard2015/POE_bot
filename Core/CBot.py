@@ -3,7 +3,6 @@ import cv2
 import time
 import os
 import enum
-import numpy as np
 
 from .CBotDebugState import CBotDebugState
 from .extractGameMap import extractGameMap
@@ -21,7 +20,8 @@ class CBot:
     self.logger = logger
     self._minimapRecognizer = CMinimapRecognizer()
     self.navigator = navigator if navigator else CNavigator()
-    self.state = BotState.IDLE 
+    self.state = BotState.IDLE
+    self._lastDump = 0 
     pass
   
   def isActive(self):
@@ -42,21 +42,22 @@ class CBot:
     return ([], debug)
   
   def _onIdle(self, screenshot, debug):
-    # temporally code for collecting data
-    dumpMinimap = (win32api.GetAsyncKeyState(ord('T')) & 1) == 1
-
     mapImg = extractGameMap(screenshot)
     mapMaskWalls, mapMaskUnknown = self._minimapRecognizer.process(mapImg)
-    if dumpMinimap:
-      os.makedirs("minimap", exist_ok=True)
-      fname = 'minimap/%d_%%s.jpg' % time.time_ns()
-      cv2.imwrite(fname % 'input', mapImg)
-      cv2.imwrite(fname % 'walls', mapMaskWalls)
-      cv2.imwrite(fname % 'unknown', mapMaskUnknown)
-
+    
     debug.put('map mask walls', mapMaskWalls)
     debug.put('map mask unknown', mapMaskUnknown)
     
+    # temporally code for collecting data
+    T = int(time.time())
+    if 2 < (T - self._lastDump): # every 2 sec
+      os.makedirs("minimap", exist_ok=True)
+      fname = 'minimap/%d_%%s.jpg' % T
+      cv2.imwrite(fname % 'input', mapImg)
+      cv2.imwrite(fname % 'walls', mapMaskWalls)
+      cv2.imwrite(fname % 'unknown', mapMaskUnknown)
+      self._lastDump = T
+
 #     self.navigator.update(mapMask)
     
     # TODO: return action for exploring map
