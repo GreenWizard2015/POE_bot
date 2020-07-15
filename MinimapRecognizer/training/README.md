@@ -93,11 +93,8 @@ Not perfect, but further attempts to increase accuracy are not practical.
 Examples:
 
 Before | After
----: | ---:
+--- | ---
 ![](images/f37aed31/1_before.jpg) | ![](images/f37aed31/1_after.jpg)
----: | ---:
 ![](images/f37aed31/2_before.jpg) | ![](images/f37aed31/2_after.jpg)
----: | ---:
 ![](images/f37aed31/3_before.jpg) | ![](images/f37aed31/3_after.jpg)
----: | ---:
 ![](images/f37aed31/4_before.jpg) | ![](images/f37aed31/4_after.jpg)
