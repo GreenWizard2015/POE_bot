@@ -1,16 +1,20 @@
-## Scripts and folders
+## (main) Scripts and folders
 
 dataset\ - contains data for training.
 
 debug\ - debug output of training. See NNDebugCallback.py
- 
-converter.py - script that takes `../../minimap/*_input.jpg`, apply to them `CMinimapRecognizer` and save results into `output` folder.
 
+model.py - Keras model of NN.
+
+train.py and commonTrainingLoop.py - core of training a neural network.
+ 
 DataGenerator.py - data generator for training.
 
-NNDebugCallback.py - callback for debugging the training process. Applies the current model to `debug\src_input.jpg` and save diffs between predicted masks and ground truth.
+CmrDefaultModel.py - wrapper class for NN.
 
-train.py - (for now) messy playground for training a neural network.
+MinimapRecognizer_colab.ipynb - notebook, that can be [opened]() in Google Colab and train NN on their GPU. 
+
+converter.py - script that takes `../../minimap/*_input.jpg`, apply to them `CMinimapRecognizer` and save results into `output` folder.
 
 ## History
 
