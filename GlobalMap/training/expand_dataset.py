@@ -23,7 +23,7 @@ for p in glob.glob(os.path.join(raw, '*')):
   
   ###############
   print('Creating masks...')
-  for src in glob.glob(os.path.join(dest, '*/*_input.jpg'), recursive=not True):
+  for src in glob.glob(os.path.join(dest, '*/*_input.jpg')):
     walls, unknown = recognizer.process(cv2.imread(src))
     
     fn = lambda x: src.replace('_input.jpg', '_%s.jpg' % x)
