@@ -1,6 +1,7 @@
 import sys
 import os
 import tensorflow as tf
+from GlobalMap.training.CDataGenerator import CDataGenerator
 
 if 'COLAB_GPU' in os.environ:
   # fix resolve modules
@@ -15,8 +16,11 @@ else: # local GPU
 import tensorflow.keras as keras
 import time
 
-# TODO: Create CDataGenerator 
-CDataGenerator = None
+folder = lambda x: os.path.join(os.path.dirname(__file__), x)
+CDataGenerator(
+  folder('dataset/train'), dims=None, 
+  batchSize=1, batchesPerEpoch=1, seed=1
+)
 # TODO: Create model class
 model = None
 model.load(only_fully_trained = False, reset=True)
