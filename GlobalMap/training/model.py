@@ -19,10 +19,11 @@ def upsamplingBlock(prev, shortcut, sz, filters):
   return convBlock(concatenated, sz, filters)
 
 def GMNetwork(input_shape_big, input_shape_small):
+  sz = input_shape_big[0]
   inputA = layers.Input(shape=input_shape_big)
   inputB = layers.Input(shape=input_shape_small)
   
-  scaleFactor = input_shape_big[0] // input_shape_small[0]
+  scaleFactor = sz // input_shape_small[0]
 
   res = layers.Concatenate()([
     layers.Conv2D(3, 1, activation='relu', padding='same')(inputA),
@@ -40,14 +41,18 @@ def GMNetwork(input_shape_big, input_shape_small):
   res = upsamplingBlock(res, convC, 3, 12)
   res = upsamplingBlock(res, convB, 3, 8)
   res = upsamplingBlock(res, convA, 3, 4)
-
-  sz = input_shape_big[0]
-  X = layers.Flatten() (
-    layers.Conv2D(1, (1, sz), strides=(sz, 1), activation='softmax')(res)
-  )
-  Y = layers.Flatten() (
-    layers.Conv2D(1, (sz, 1), strides=(1, sz), activation='softmax')(res)
-  )
+  
+  res = layers.Convolution2D(1, 1, padding="same")(res)
+  X = layers.Softmax()(layers.Flatten() (
+    layers.TimeDistributed(layers.MaxPooling1D(sz)) (
+      res
+    )
+  ))
+  Y = layers.Softmax()(layers.Flatten() (
+    layers.TimeDistributed(layers.MaxPooling1D(sz)) (
+      layers.Permute((2, 1, 3))(res)
+    )
+  ))
   
   return keras.Model(
     inputs=(inputA, inputB),
