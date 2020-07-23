@@ -119,9 +119,13 @@ class CDataGenerator(Sequence):
     crops = self._generateCrops(sampleWalls)
     Y = np.array([self._asOHE(x[2]) for x in crops])
     return (
-      np.array([x[0] for x in crops]),
-      np.array([x[1] for x in crops]),
-      Y[:, 0], Y[:, 1]
+      (
+        np.array([x[0] for x in crops]),
+        np.array([x[1] for x in crops])
+      ),
+      (
+        Y[:, 0], Y[:, 1]
+      )
     )
   ###########################
   def _loadMasks(self, srcWalls):

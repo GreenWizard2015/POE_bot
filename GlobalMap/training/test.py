@@ -15,8 +15,8 @@ gen = CDataGenerator(
 
 while True:
   gen.on_epoch_end()
-  samples = gen[0]
-  for (img, crop, posX_OHE, posY_OHE) in zip(*samples):
+  samplesIn, samplesOut = gen[0]
+  for (img, crop, posX_OHE, posY_OHE) in zip(*samplesIn, *samplesOut):
     pos = (np.argmax(posY_OHE, axis=-1), np.argmax(posX_OHE, axis=-1))
     img = cv2.cvtColor(img.astype(np.uint8) * 128, cv2.COLOR_GRAY2BGR) 
     

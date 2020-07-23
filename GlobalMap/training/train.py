@@ -2,6 +2,7 @@ import sys
 import os
 import tensorflow as tf
 from GlobalMap.training.CGlobalMapGenerator import CDataGenerator
+from GlobalMap.training.CGlobalMapDefaultModel import CGlobalMapDefaultModel
 
 if 'COLAB_GPU' in os.environ:
   # fix resolve modules
@@ -17,41 +18,42 @@ import tensorflow.keras as keras
 import time
 
 folder = lambda x: os.path.join(os.path.dirname(__file__), x)
-CDataGenerator(
-  folder('dataset/train'), dims=None, 
-  batchSize=1, batchesPerEpoch=1, seed=1
-)
-# TODO: Create model class
-model = None
+model = CGlobalMapDefaultModel()
 model.load(only_fully_trained = False, reset=True)
 
-batch_size=32
+batch_size=4
 batch_per_epoch=32
 batch_per_validation=0.2
 batch_per_validation = int(batch_per_epoch * batch_per_validation)
 
 params = model.trainingParams()
 model.network.compile(
-  optimizer=keras.optimizers.Adam(lr=0.001),
+  optimizer=keras.optimizers.Adam(lr=0.1),
   loss=params.loss(),
   metrics=[]
 )
 
 seed = time.time() # kinda random seed
-dims = model.input_shape[:2]
-folder = lambda x: os.path.join(os.path.dirname(__file__), x)
 
 trainGenerator = params.DataGenerator(
   CDataGenerator(
-    folder('dataset/train'), dims=dims, 
-    batchSize=batch_size, batchesPerEpoch=batch_per_epoch, seed=seed
+    folder('dataset/train'), 
+    batchSize=batch_size, batchesPerEpoch=batch_per_epoch, seed=seed,
+    bigMapSize=1024,
+    minCommonPoints=20,
+    minInnerPoints=80,
+    smallMapSize=256
   )
 )
 
 validGenerator = params.DataGenerator(
   CDataGenerator(
-    folder('dataset/validation'), dims=dims,
-    batchSize=batch_size, batchesPerEpoch=batch_per_validation, seed=seed
+    folder('dataset/validation'),
+    batchSize=batch_size, batchesPerEpoch=batch_per_validation, seed=seed,
+    bigMapSize=1024,
+    minCommonPoints=20,
+    minInnerPoints=80,
+    smallMapSize=256
   )
 )
 

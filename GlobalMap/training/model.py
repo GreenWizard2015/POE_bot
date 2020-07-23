@@ -25,8 +25,8 @@ def GMNetwork(input_shape_big, input_shape_small):
   scaleFactor = input_shape_big[0] // input_shape_small[0]
 
   res = layers.Concatenate()([
-    layers.Conv2D(16, 1, activation='relu', padding='same')(inputA),
-    layers.Convolution2DTranspose(16, (scaleFactor, scaleFactor), strides=scaleFactor)(inputB)
+    layers.Conv2D(3, 1, activation='relu', padding='same')(inputA),
+    layers.Convolution2DTranspose(3, (scaleFactor, scaleFactor), strides=scaleFactor)(inputB)
   ])
   
   convA, res = downsamplingBlockWithLink(res, 3, 4)
@@ -43,10 +43,10 @@ def GMNetwork(input_shape_big, input_shape_small):
 
   sz = input_shape_big[0]
   X = layers.Flatten() (
-    layers.Conv2D(1, (1, sz), strides=(1, sz), activation='softmax')(res)
+    layers.Conv2D(1, (1, sz), strides=(sz, 1), activation='softmax')(res)
   )
   Y = layers.Flatten() (
-    layers.Conv2D(1, (sz, 1), strides=(sz, 1), activation='softmax')(res)
+    layers.Conv2D(1, (sz, 1), strides=(1, sz), activation='softmax')(res)
   )
   
   return keras.Model(
