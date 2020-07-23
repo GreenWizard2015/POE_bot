@@ -1,7 +1,7 @@
 import sys
 import os
 import tensorflow as tf
-from GlobalMap.training.CDataGenerator import CDataGenerator
+from GlobalMap.training.CGlobalMapGenerator import CDataGenerator
 
 if 'COLAB_GPU' in os.environ:
   # fix resolve modules
