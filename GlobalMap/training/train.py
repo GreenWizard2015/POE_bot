@@ -1,13 +1,11 @@
 import sys
 import os
 import tensorflow as tf
-from GlobalMap.training.CGlobalMapGenerator import CDataGenerator
-from GlobalMap.training.CGlobalMapDefaultModel import CGlobalMapDefaultModel
 
 if 'COLAB_GPU' in os.environ:
   # fix resolve modules
   from os.path import dirname
-  sys.path.append(dirname(dirname(__file__)))
+  sys.path.append(dirname(dirname(dirname(__file__))))
 else: # local GPU
   gpus = tf.config.experimental.list_physical_devices('GPU')
   tf.config.experimental.set_virtual_device_configuration(
@@ -16,6 +14,8 @@ else: # local GPU
 
 import tensorflow.keras as keras
 import time
+from GlobalMap.training.CGlobalMapGenerator import CDataGenerator
+from GlobalMap.training.CGlobalMapDefaultModel import CGlobalMapDefaultModel
 
 folder = lambda x: os.path.join(os.path.dirname(__file__), x)
 model = CGlobalMapDefaultModel()
