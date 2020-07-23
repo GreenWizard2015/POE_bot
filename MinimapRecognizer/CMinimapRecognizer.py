@@ -1,6 +1,6 @@
 import numpy as np
-from training.CmrDefaultModel import CmrDefaultModel
-from splitRegions import splitRegions
+from MinimapRecognizer.training.CmrDefaultModel import CmrDefaultModel
+from MinimapRecognizer.splitRegions import splitRegions
 
 class CMinimapRecognizer:
   def __init__(self, threshold=0.85, model=None):

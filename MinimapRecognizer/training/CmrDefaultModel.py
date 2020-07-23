@@ -1,7 +1,7 @@
 import os
 import cv2
-from .losses import MulticlassDiceLoss
-from training.model import MRNetwork
+from MinimapRecognizer.training.losses import MulticlassDiceLoss
+from MinimapRecognizer.training.model import MRNetwork
 from tensorflow import keras
 
 class CmrDefaultModel:

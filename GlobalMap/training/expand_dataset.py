@@ -1,7 +1,6 @@
 import sys
 import os
 import tensorflow as tf
-from GlobalMap.training.findGlobalShift import findGlobalShift
 gpus = tf.config.experimental.list_physical_devices('GPU')
 tf.config.experimental.set_virtual_device_configuration(
   gpus[0], [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=1024)]
@@ -14,7 +13,8 @@ if 'COLAB_GPU' in os.environ:
 
 import glob
 import shutil
-from CMinimapRecognizer import CMinimapRecognizer
+from MinimapRecognizer.CMinimapRecognizer import CMinimapRecognizer
+from GlobalMap.training.findGlobalShift import findGlobalShift
 import cv2
 import numpy as np
 
