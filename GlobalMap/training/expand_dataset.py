@@ -10,7 +10,7 @@ tf.config.experimental.set_virtual_device_configuration(
 if 'COLAB_GPU' in os.environ:
   # fix resolve modules
   from os.path import dirname
-  sys.path.append(dirname(dirname(__file__)))
+  sys.path.append(dirname(dirname(dirname(__file__))))
 
 import glob
 import shutil
