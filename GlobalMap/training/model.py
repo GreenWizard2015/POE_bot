@@ -41,20 +41,13 @@ def GMNetwork(input_shape_big, input_shape_small):
   res = upsamplingBlock(res, convC, 3, 12)
   res = upsamplingBlock(res, convB, 3, 8)
   res = upsamplingBlock(res, convA, 3, 4)
+  res = layers.Convolution2D(4, 1, padding="same", activation="softmax")(res)
   
   res = layers.Convolution2D(1, 1, padding="same")(res)
-  X = layers.Softmax()(layers.Flatten() (
-    layers.TimeDistributed(layers.MaxPooling1D(sz)) (
-      res
-    )
-  ))
-  Y = layers.Softmax()(layers.Flatten() (
-    layers.TimeDistributed(layers.MaxPooling1D(sz)) (
-      layers.Permute((2, 1, 3))(res)
-    )
-  ))
+  res = layers.Convolution2D(1, 1, padding="same")(res)
+  res = layers.Convolution2D(1, 1, padding="same", activation="softmax")(res)
   
   return keras.Model(
     inputs=(inputA, inputB),
-    outputs=(X, Y)
+    outputs=res
   )

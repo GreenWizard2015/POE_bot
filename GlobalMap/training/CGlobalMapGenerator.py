@@ -98,6 +98,7 @@ class CDataGenerator(Sequence):
       B_y = self._random.randint(0, self._bigMapSize - X_h)
       
       bigMap[B_x:B_x+X_w, B_y:B_y+X_h] = img[X_x:(X_x + X_w), X_y:(X_y + X_h)]
+      bigMapSrc = bigMap.copy()
       bigMap[
         (B_x + minimapX):(B_x + minimapX + self._smallMapSize),
         (B_y + minimapY):(B_y + minimapY + self._smallMapSize)
@@ -106,10 +107,7 @@ class CDataGenerator(Sequence):
       crops.append((
         bigMap,
         minimap,
-        (
-          B_x + minimapX + self._smallMapSize / 2,
-          B_y + minimapY + self._smallMapSize / 2
-        )
+        bigMapSrc.reshape((1, self._bigMapSize, self._bigMapSize))
       ))
 
     return crops
@@ -117,24 +115,15 @@ class CDataGenerator(Sequence):
   def __getitem__(self, index):
     sampleWalls, _ = self._batchData( self._epochBatches[index] )
     crops = self._generateCrops(sampleWalls)
-    Y = np.array([self._asOHE(x[2]) for x in crops])
     return (
       (
         np.array([x[0] for x in crops]),
         np.array([x[1] for x in crops])
       ),
-      (
-        Y[:, 0], Y[:, 1]
-      )
+      np.array([x[2] for x in crops])
     )
   ###########################
   def _loadMasks(self, srcWalls):
     imgWalls = cv2.imread(srcWalls, cv2.IMREAD_GRAYSCALE)
     imgWalls = np.where(80 < imgWalls, 1, 0).astype(np.float32)
     return [imgWalls]
-  
-  def _asOHE(self, pos):
-    res = np.zeros((2, self._bigMapSize), np.uint8)
-    for i, p in enumerate(pos):
-      res[i, int(p)] = 1
-    return res

@@ -1,6 +1,6 @@
 import os
 from GlobalMap.training.model import GMNetwork
-from tensorflow.keras import losses
+from MinimapRecognizer.training.losses import MulticlassDiceLoss
 
 class CGlobalMapDefaultModel:
   def __init__(self):
@@ -42,9 +42,7 @@ class CTrainingParameters:
     return
   
   def loss(self):
-    def calc(a, b):
-      return losses.categorical_crossentropy(a, b)
-    return calc
+    return MulticlassDiceLoss(weights=[1])
 
   def DataGenerator(self, generator):
     return generator
