@@ -117,10 +117,11 @@ class CDataGenerator(Sequence):
   def __getitem__(self, index):
     sampleWalls, _ = self._batchData( self._epochBatches[index] )
     crops = self._generateCrops(sampleWalls)
+    Y = np.array([self._asOHE(x[2]) for x in crops])
     return (
       np.array([x[0] for x in crops]),
       np.array([x[1] for x in crops]),
-      np.array([self._asOHE(x[2]) for x in crops])
+      Y[:, 0], Y[:, 1]
     )
   ###########################
   def _loadMasks(self, srcWalls):
