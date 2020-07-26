@@ -18,34 +18,37 @@ def upsamplingBlock(prev, shortcut, sz, filters):
    
   return convBlock(concatenated, sz, filters)
 
-def GMNetwork(input_shape_big, input_shape_small):
-  sz = input_shape_big[0]
-  inputA = layers.Input(shape=input_shape_big)
-  inputB = layers.Input(shape=input_shape_small)
+def GMNetworkHead(input_shape):
+  input = res = layers.Input(shape=input_shape)
   
-  scaleFactor = sz // input_shape_small[0]
-
-  res = layers.Concatenate()([
-    layers.Conv2D(3, 1, activation='relu', padding='same')(inputA),
-    layers.Convolution2DTranspose(3, (scaleFactor, scaleFactor), strides=scaleFactor)(inputB)
-  ])
-  
-  convA, res = downsamplingBlockWithLink(res, 3, 4)
+  convA, res = downsamplingBlockWithLink(res, 3, 8)
   convB, res = downsamplingBlockWithLink(res, 3, 8)
-  convC, res = downsamplingBlockWithLink(res, 3, 12)
-  convD, res = downsamplingBlockWithLink(res, 3, 14)
-  
+
   res = convBlock(res, 3, 16)
   
-  res = upsamplingBlock(res, convD, 3, 14)
-  res = upsamplingBlock(res, convC, 3, 12)
   res = upsamplingBlock(res, convB, 3, 8)
-  res = upsamplingBlock(res, convA, 3, 4)
-  res = layers.Convolution2D(4, 1, padding="same", activation="softmax")(res)
+  res = upsamplingBlock(res, convA, 3, 8)
   
-  res = layers.Convolution2D(1, 1, padding="same")(res)
-  res = layers.Convolution2D(1, 1, padding="same")(res)
-  res = layers.Convolution2D(1, 1, padding="same", activation="softmax")(res)
+  res = layers.Convolution2D(32, 7, padding="same")(res)
+  
+  return keras.Model(inputs=input, outputs=res)
+
+def GMNetwork(input_shape):
+  inputA = layers.Input(shape=input_shape)
+  inputB = layers.Input(shape=input_shape)
+  
+  head = GMNetworkHead(input_shape)
+
+  res = layers.Concatenate()([head(inputA), head(inputB)])
+  
+  _, res = downsamplingBlockWithLink(res, 3, 8)
+  _, res = downsamplingBlockWithLink(res, 3, 8)
+  _, res = downsamplingBlockWithLink(res, 3, 8)
+  _, res = downsamplingBlockWithLink(res, 3, 8)
+  _, res = downsamplingBlockWithLink(res, 3, 8)
+  
+  res = layers.Convolution2D(2, 1, activation='sigmoid')(res)
+  res = layers.GlobalAveragePooling2D()(res)
   
   return keras.Model(
     inputs=(inputA, inputB),

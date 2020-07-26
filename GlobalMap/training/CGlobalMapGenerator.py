@@ -67,47 +67,42 @@ class CDataGenerator(Sequence):
     w = img.shape[0]
     h = img.shape[1]
     
+    hsz = self._smallMapSize // 2
     crops = []
     while len(crops) < N:
-      overlapArea = self._random.randint(10, self._smallMapSize // 5)
+      overlapArea = self._random.randint(10, hsz)
+      X_w = X_h = 2 * self._smallMapSize
       
-      minSz = 2 * overlapArea + self._smallMapSize
-      X_w = min((self._bigMapSize, self._random.randint(minSz, w - minSz)))
-      X_h = min((self._bigMapSize, self._random.randint(minSz, h - minSz)))
+      X_x = self._random.randint(0, w - X_w) + hsz
+      X_y = self._random.randint(0, h - X_h) + hsz
       
-      # LT of X
-      X_x = self._random.randint(0, w - X_w)
-      X_y = self._random.randint(0, h - X_h)
+      while True:
+        map_dX = self._random.randint(-hsz, hsz)
+        if 5 < abs(map_dX): break
       
-      minimapX = self._random.randint(0, X_w - self._smallMapSize)
-      minimapY = self._random.randint(0, X_h - self._smallMapSize)
+      while True:
+        map_dY = self._random.randint(-hsz, hsz)
+        if 5 < abs(map_dY): break
       
-      minimap = img[
-        (X_x + minimapX):(X_x + minimapX + self._smallMapSize),
-        (X_y + minimapY):(X_y + minimapY + self._smallMapSize)
+      mapA = img[
+        (X_x):(X_x + self._smallMapSize),
+        (X_y):(X_y + self._smallMapSize)
+      ]
+      mapB = img[
+        (X_x + map_dX):(X_x + map_dX + self._smallMapSize),
+        (X_y + map_dY):(X_y + map_dY + self._smallMapSize)
       ]
       # check overlap
-      overlap = minimap.copy()
-      overlap[overlapArea:-overlapArea, overlapArea:-overlapArea] = 0
-      innerPoints = np.count_nonzero(overlap)
+      innerPoints = np.count_nonzero(mapA) + np.count_nonzero(mapB)
       if innerPoints < self._minCommonPoints: continue
-      if (np.count_nonzero(minimap) - innerPoints) < self._minInnerPoints: continue
       #
-      bigMap = np.zeros((self._bigMapSize, self._bigMapSize))
-      B_x = self._random.randint(0, self._bigMapSize - X_w)
-      B_y = self._random.randint(0, self._bigMapSize - X_h)
-      
-      bigMap[B_x:B_x+X_w, B_y:B_y+X_h] = img[X_x:(X_x + X_w), X_y:(X_y + X_h)]
-      bigMapSrc = bigMap.copy()
-      bigMap[
-        (B_x + minimapX):(B_x + minimapX + self._smallMapSize),
-        (B_y + minimapY):(B_y + minimapY + self._smallMapSize)
-      ] = overlap
-
       crops.append((
-        bigMap,
-        minimap,
-        bigMapSrc.reshape((1, self._bigMapSize, self._bigMapSize))
+        mapA,
+        mapB,
+        [
+          (map_dX - hsz) / self._smallMapSize,
+          (map_dY - hsz) / self._smallMapSize
+        ]
       ))
 
     return crops

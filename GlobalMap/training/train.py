@@ -9,7 +9,7 @@ if 'COLAB_GPU' in os.environ:
 else: # local GPU
   gpus = tf.config.experimental.list_physical_devices('GPU')
   tf.config.experimental.set_virtual_device_configuration(
-    gpus[0], [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=5 * 1024)]
+    gpus[0], [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=3 * 1024)]
   )
 
 import tensorflow.keras as keras
@@ -20,6 +20,7 @@ from GlobalMap.training.CGlobalMapDefaultModel import CGlobalMapDefaultModel
 folder = lambda x: os.path.join(os.path.dirname(__file__), x)
 model = CGlobalMapDefaultModel()
 model.load(only_fully_trained = False, reset=True)
+model.network.summary()
 
 batch_size=4
 batch_per_epoch=32
