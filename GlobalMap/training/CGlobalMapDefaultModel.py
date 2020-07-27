@@ -1,7 +1,7 @@
 import os
 from GlobalMap.training.model import GMNetwork
 from MinimapRecognizer.training.losses import MulticlassDiceLoss
-import tensorflow.keras.losses as L
+import tensorflow.keras.backend as K
 
 class CGlobalMapDefaultModel:
   def __init__(self):
@@ -40,7 +40,9 @@ class CTrainingParameters:
     return
   
   def loss(self):
-    return L.mean_squared_logarithmic_error
+    def calc(y_true, y_pred):
+      return K.sqrt(K.sum(K.square(y_pred - y_true), axis=-1))
+    return calc
 
   def DataGenerator(self, generator):
     return generator

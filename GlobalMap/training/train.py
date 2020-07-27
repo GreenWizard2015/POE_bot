@@ -22,14 +22,14 @@ model = CGlobalMapDefaultModel()
 model.load(only_fully_trained = False, reset=True)
 model.network.summary()
 
-batch_size=4
+batch_size=32
 batch_per_epoch=32
 batch_per_validation=0.2
 batch_per_validation = int(batch_per_epoch * batch_per_validation)
 
 params = model.trainingParams()
 model.network.compile(
-  optimizer=keras.optimizers.Adam(lr=0.1),
+  optimizer=keras.optimizers.Adam(lr=0.001),
   loss=params.loss(),
   metrics=[]
 )
