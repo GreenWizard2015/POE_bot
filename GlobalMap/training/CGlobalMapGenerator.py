@@ -100,8 +100,8 @@ class CDataGenerator(Sequence):
         mapA,
         mapB,
         [
-          (map_dX - hsz) / self._smallMapSize,
-          (map_dY - hsz) / self._smallMapSize
+          (map_dX - hsz) / (self._smallMapSize - 1),
+          (map_dY - hsz) / (self._smallMapSize - 1)
         ]
       ))
 

@@ -1,5 +1,6 @@
 import tensorflow.keras as keras
 import tensorflow.keras.layers as layers
+from GlobalMap.training.PositionPooling2D import PositionPooling2D
  
 def convBlock(prev, sz, filters):
   conv_1 = layers.Convolution2D(filters, (sz, sz), padding="same", activation="relu")(prev)
@@ -39,15 +40,15 @@ def GMNetwork(input_shape):
   
   head = GMNetworkHead(input_shape)
 
-  res = layers.Concatenate()([head(inputA), head(inputB)])
+  res = layers.Lambda(lambda x: keras.backend.square(x[1] - x[0]))([head(inputA), head(inputB)])
   
-  _, res = downsamplingBlockWithLink(res, 3, 8)
-  _, res = downsamplingBlockWithLink(res, 3, 8)
-  _, res = downsamplingBlockWithLink(res, 3, 8)
-  _, res = downsamplingBlockWithLink(res, 3, 8)
-  _, res = downsamplingBlockWithLink(res, 3, 8)
+  res = convBlock(res, 3, 16)
+  res = convBlock(res, 3, 16)
+  res = convBlock(res, 3, 16)
+  res = convBlock(res, 3, 16)
   
-  res = layers.Convolution2D(2, 1, activation='sigmoid')(res)
+  res = layers.Convolution2D(2, 1)(res)
+#   res = PositionPooling2D(pool_size=(16, 16), strides=(1, 1), padding='same')(res)
   res = layers.GlobalAveragePooling2D()(res)
   
   return keras.Model(
