@@ -1,9 +1,8 @@
 import tensorflow.keras as keras
 import tensorflow.keras.layers as layers
-from GlobalMap.training.PositionPooling2D import PositionPooling2D
- 
-def convBlock(prev, sz, filters):
-  conv_1 = layers.Convolution2D(filters, (sz, sz), padding="same", activation="relu")(prev)
+
+def convBlock(prev, sz, filters, strides=1):
+  conv_1 = layers.Convolution2D(filters, (sz, sz), padding="same", activation="relu", strides=strides)(prev)
   conv_1 = layers.Dropout(0.1)(conv_1)
   conv_1 = layers.BatchNormalization()(conv_1)
   return conv_1
@@ -19,38 +18,39 @@ def upsamplingBlock(prev, shortcut, sz, filters):
    
   return convBlock(concatenated, sz, filters)
 
-def GMNetworkHead(input_shape):
-  input = res = layers.Input(shape=input_shape)
-  
-  convA, res = downsamplingBlockWithLink(res, 3, 8)
-  convB, res = downsamplingBlockWithLink(res, 3, 8)
-
-  res = convBlock(res, 3, 16)
-  
-  res = upsamplingBlock(res, convB, 3, 8)
-  res = upsamplingBlock(res, convA, 3, 8)
-  
-  res = layers.Convolution2D(32, 7, padding="same")(res)
-  
-  return keras.Model(inputs=input, outputs=res)
-
 def GMNetwork(input_shape):
   inputA = layers.Input(shape=input_shape)
   inputB = layers.Input(shape=input_shape)
   
-  head = GMNetworkHead(input_shape)
+  res = layers.Concatenate(axis=-1)([inputA, inputB])
+  # aka ShiftNet (https://www.mdpi.com/1424-8220/19/23/5310/htm)
+  # block A  
+  res = convBlock(res, sz=3, filters=16, strides=2)
+  blockA = res = convBlock(res, sz=3, filters=16, strides=2)
+  
+  # block B  
+  res = convBlock(res, sz=3, filters=32, strides=1)
+  blockB = res = convBlock(res, sz=3, filters=32, strides=2)
+  
+  # block C
+  res = convBlock(res, sz=3, filters=64, strides=1)
+  blockC = res = convBlock(res, sz=3, filters=64, strides=2)
+  #######################
+  blockA = convBlock(blockA, sz=4, filters=64, strides=4)
+  blockA = convBlock(blockA, sz=4, filters=64, strides=4)
+  blockA = convBlock(blockA, sz=4, filters=64, strides=4)
+  
+  blockB = convBlock(blockB, sz=4, filters=64, strides=4)
+  blockB = convBlock(blockB, sz=4, filters=64, strides=4)
+  blockB = convBlock(blockB, sz=2, filters=64, strides=2)
+  
+  blockC = convBlock(blockC, sz=4, filters=64, strides=4)
+  blockC = convBlock(blockC, sz=4, filters=64, strides=4)
 
-  res = layers.Lambda(lambda x: keras.backend.square(x[1] - x[0]))([head(inputA), head(inputB)])
-  
-  res = convBlock(res, 3, 16)
-  res = convBlock(res, 3, 16)
-  res = convBlock(res, 3, 16)
-  res = convBlock(res, 3, 16)
-  
-  res = layers.Convolution2D(2, 1)(res)
-#   res = PositionPooling2D(pool_size=(16, 16), strides=(1, 1), padding='same')(res)
-  res = layers.GlobalAveragePooling2D()(res)
-  
+  res = layers.Concatenate(axis=-1)([blockA, blockB, blockC])
+  res = layers.Dense(2, activation='tanh')(
+    layers.Flatten()(res)
+  )
   return keras.Model(
     inputs=(inputA, inputB),
     outputs=res
