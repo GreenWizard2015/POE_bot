@@ -78,11 +78,11 @@ class CDataGenerator(Sequence):
       
       while True:
         map_dX = self._random.randint(-hsz, hsz)
-        if 5 < abs(map_dX): break
+        if 5 < abs(map_dX) < 64: break
       
       while True:
         map_dY = self._random.randint(-hsz, hsz)
-        if 5 < abs(map_dY): break
+        if 5 < abs(map_dY) < 64: break
       
       mapA = img[
         (X_x):(X_x + self._smallMapSize),
@@ -100,8 +100,8 @@ class CDataGenerator(Sequence):
         mapA,
         mapB,
         [
-          (map_dX - hsz) / (self._smallMapSize - 1),
-          (map_dY - hsz) / (self._smallMapSize - 1)
+          map_dX / hsz,
+          map_dY / hsz
         ]
       ))
 
