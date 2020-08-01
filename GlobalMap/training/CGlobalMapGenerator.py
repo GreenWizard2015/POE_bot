@@ -100,8 +100,8 @@ class CDataGenerator(Sequence):
         mapA,
         mapB,
         [
-          map_dX / hsz,
-          map_dY / hsz
+          map_dX / 64,
+          map_dY / 64
         ]
       ))
 
