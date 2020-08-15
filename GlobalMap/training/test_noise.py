@@ -32,5 +32,6 @@ while True:
     cv2.imshow('B', cv2.resize(B[0], (256, 256)))
 
     prediction = model.network.predict(A.reshape((1, 256, 256, 1)))[0]
-    cv2.imshow('pred', cv2.resize(prediction, (256, 256)))
+    diff = B[0] - prediction[:, :, 0]
+    cv2.imshow('pred', cv2.resize(diff, (256, 256)))
     cv2.waitKey()

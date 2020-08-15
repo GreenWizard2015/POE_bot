@@ -67,7 +67,7 @@ class CNoiseMapGenerator(Sequence):
       #
       res.append((
         mapInput,
-        cleanedMap
+        img
       ))
 
     return res
