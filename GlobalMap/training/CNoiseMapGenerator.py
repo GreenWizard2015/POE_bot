@@ -3,6 +3,7 @@ import cv2
 from tensorflow.keras.utils import Sequence
 from random import Random
 from glob import glob
+import os
 
 class CNoiseMapGenerator(Sequence):
   def __init__(self, folder, 
@@ -21,7 +22,7 @@ class CNoiseMapGenerator(Sequence):
     self._images = [
       ( 
         self._loadMasks(f),
-      ) for f in glob('%s/**/*_walls.jpg' % folder, recursive=True)
+      ) for f in glob('%s/**/*_walls.jpg' % folder, recursive=True) if self._validMask(f)
     ]
     self.on_epoch_end()
     return
@@ -42,7 +43,7 @@ class CNoiseMapGenerator(Sequence):
     N = N if N else self._batchSize
 
     cleanedMap = np.square(cv2.resize(img * 255, (self._outputMapSize, self._outputMapSize)) / 255.0)
-    cleanedMap[np.where(0.5 < cleanedMap)] = 1
+    cleanedMap[np.where(0 < cleanedMap)] = 1
     cleanedMap = cleanedMap.reshape((1, self._outputMapSize, self._outputMapSize))
     res = []
     while len(res) < N:
@@ -83,3 +84,6 @@ class CNoiseMapGenerator(Sequence):
     imgWalls = cv2.imread(srcWalls, cv2.IMREAD_GRAYSCALE)
     imgWalls = np.where(80 < imgWalls, 1, 0).astype(np.float32)
     return [imgWalls]
+  
+  def _validMask(self, f):
+    return not os.path.basename(f).startswith('global')
