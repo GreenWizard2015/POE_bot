@@ -42,9 +42,7 @@ class CNoiseMapGenerator(Sequence):
   def _generateSamples(self, img, N=None):
     N = N if N else self._batchSize
 
-    cleanedMap = np.square(cv2.resize(img * 255, (self._outputMapSize, self._outputMapSize)) / 255.0)
-    cleanedMap[np.where(0 < cleanedMap)] = 1
-    cleanedMap = cleanedMap.reshape((1, self._outputMapSize, self._outputMapSize))
+    resMap = img.copy().reshape((1, self._outputMapSize, self._outputMapSize))
     res = []
     while len(res) < N:
       mapInput = img.copy()
@@ -67,7 +65,7 @@ class CNoiseMapGenerator(Sequence):
       #
       res.append((
         mapInput,
-        img
+        resMap
       ))
 
     return res

@@ -41,7 +41,7 @@ trainGenerator = params.DataGenerator(
   CNoiseMapGenerator(
     folder('dataset/train'), 
     batchSize=batch_size, batchesPerEpoch=batch_per_epoch, seed=seed,
-    outputMapSize=64,
+    outputMapSize=256,
     noiseAdded=64,
     noiseVanished=64
   )
@@ -51,7 +51,7 @@ validGenerator = params.DataGenerator(
   CNoiseMapGenerator(
     folder('dataset/validation'),
     batchSize=batch_size, batchesPerEpoch=batch_per_validation, seed=seed,
-    outputMapSize=64,
+    outputMapSize=256,
     noiseAdded=64,
     noiseVanished=64
   )

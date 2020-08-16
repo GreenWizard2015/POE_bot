@@ -4,32 +4,32 @@ from MinimapRecognizer.training.losses import MulticlassDiceLoss
 import tensorflow.keras as keras
 import tensorflow.keras.layers as layers
 
-def convBlock(prev, sz, filters, strides=1):
-  conv_1 = layers.Convolution2D(filters, (sz, sz), padding="same", activation="relu", strides=strides)(prev)
+def downsamplingBlock(prev, sz, filters):
+  conv_1 = layers.Convolution2D(filters, (sz, sz), padding="same", activation="relu", strides=2)(prev)
   conv_1 = layers.Dropout(0.1)(conv_1)
   conv_1 = layers.BatchNormalization()(conv_1)
   return conv_1
 
-def upsamplingBlock(prev, sz, filters):
-  conv_1 = layers.Convolution2DTranspose(filters, (sz, sz), strides=2, padding="same")(prev)
+def upsamplingBlock(prev, filters):
+  conv_1 = layers.Convolution2DTranspose(filters, (2, 2), strides=2, padding="same")(prev)
   conv_1 = layers.Dropout(0.1)(conv_1)
-  conv_1 = layers.BatchNormalization()(prev)
+  conv_1 = layers.BatchNormalization()(conv_1)
   return conv_1
 
 def MKNetwork(input_shape):
   inputs = layers.Input(shape=input_shape)
   
-  res = convBlock(inputs, sz=3, filters=8)
-  res = convBlock(res, sz=3, filters=16)
-  res = convBlock(res, sz=3, filters=32)
+  res = downsamplingBlock(inputs, sz=3, filters=16)
+  res = downsamplingBlock(res, sz=3, filters=16)
+  res = downsamplingBlock(res, sz=3, filters=16)
   
-  res = layers.Convolution2D(1, (1, 1), padding="same", activation="sigmoid", strides=1, name="middle")(res)
+  res = layers.Convolution2D(8, (2, 2), padding="same", activation="sigmoid", strides=1, name="middle")(res)
   
-  res = upsamplingBlock(inputs, sz=3, filters=8)
-  res = upsamplingBlock(res, sz=3, filters=16)
-  res = upsamplingBlock(res, sz=3, filters=32)
+  res = upsamplingBlock(res, filters=16)
+  res = upsamplingBlock(res, filters=16)
+  res = upsamplingBlock(res, filters=16)
   
-  res = layers.Convolution2D(1, (1, 1), padding="same", activation="sigmoid", strides=1, name="middle")(res)
+  res = layers.Convolution2D(1, (1, 1), padding="same", activation="sigmoid", strides=1)(res)
 
   return keras.Model(inputs=inputs, outputs=res)
 
@@ -63,7 +63,15 @@ class CMapKeypointsModel:
 #     res = self.network.predict(samples)
 #     return res[:, :, :, 1:] # ignore first class
     return
+
+  def freeze(self):
+    for layer in self.network.layers:
+      layer.trainable = False
+    return
   
+  def compressed(self):
+    return self.network.get_layer(name='middle').output
+
 ####################################
 class CTrainingParameters:
   def __init__(self):
