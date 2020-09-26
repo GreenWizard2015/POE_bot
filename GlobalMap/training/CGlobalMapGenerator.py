@@ -3,33 +3,11 @@ import cv2
 from tensorflow.keras.utils import Sequence
 from random import Random
 from glob import glob
-from math import floor
 
-'''
-  ---------------------------------
-  -                               -
-  -   X------------------------|  -
-  -   |       |                |  -
-  -   |   B********************|  -
-  -   |   *   |                |  -
-  -   |---*---S                |  -
-  -   |   *                    |  -
-  -   |------------------------|  -
-  -                               -
-  ---------------------------------
-  
-  - Take masks
-  - Add padding (wh -> 3*wh)
-  - Take a random region X and split into S and B
-    - X must contain >xMin 'pixels' 
-    - area SB must contain >overlapMin 'pixels'
-  
-  - Return (big map), (small map), (x, y of S in B)
-'''
 class CDataGenerator(Sequence):
   def __init__(self, folder, 
     batchSize, batchesPerEpoch, seed,
-    bigMapSize, smallMapSize,
+    smallMapSize,
     minCommonPoints, minInnerPoints
   ):
     self._minInnerPoints = minInnerPoints
@@ -38,7 +16,6 @@ class CDataGenerator(Sequence):
     self._batchesPerEpoch = batchesPerEpoch
     self._random = Random(seed)
     
-    self._bigMapSize = bigMapSize
     self._smallMapSize = smallMapSize
     
     self._epochBatches = None
@@ -100,8 +77,8 @@ class CDataGenerator(Sequence):
         mapA,
         mapB,
         [
-          map_dX / 64,
-          map_dY / 64
+          map_dX / 256,
+          map_dY / 256
         ]
       ))
 

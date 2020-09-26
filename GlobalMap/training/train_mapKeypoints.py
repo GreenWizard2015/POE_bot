@@ -14,8 +14,8 @@ else: # local GPU
 
 import tensorflow.keras as keras
 import time
-from GlobalMap.training.CNoiseMapGenerator import CNoiseMapGenerator
-from GlobalMap.training.CMapKeypointsModel import CMapKeypointsModel
+
+
 
 folder = lambda x: os.path.join(os.path.dirname(__file__), x)
 

@@ -29,13 +29,14 @@ for p in glob.glob(os.path.join(raw, '*')):
   dest = os.path.join(datasetFolder, os.path.basename(p))
   shutil.rmtree(dest, ignore_errors=True)
   shutil.copytree(p, dest)
-  
+
+
   ###############
   print('Creating masks...')
   for src in glob.glob(os.path.join(dest, '*/*_input.jpg')):
     areas.add(os.path.dirname(src))
     walls, unknown = recognizer.process(cv2.imread(src))
-    
+     
     fn = lambda x: src.replace('_input.jpg', '_%s.jpg' % x)
     cv2.imwrite(fn('walls'), walls)
     cv2.imwrite(fn('unknown'), unknown)
@@ -56,7 +57,7 @@ for area in areas:
     B = cv2.imread(BFile, cv2.IMREAD_GRAYSCALE)
     B[np.where(B < 80)] = 0
     
-    shifts.append(findGlobalShift(A, B, N=300, sz=40, minProbePoints=25, minMatchCoef=0.7))
+    shifts.append(findGlobalShift(A, B))
   
   # calc total size
   x1 = y1 = 0
