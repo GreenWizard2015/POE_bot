@@ -1,6 +1,8 @@
 from pywinauto import handleprops
 import win32gui
 from Core.grab_screenshot import grab_screen
+import numpy as np
+import pywinauto
 
 class CGame:
   def __init__(self, logger):
@@ -23,5 +25,12 @@ class CGame:
     return grab_screen(self._gameHWND, 'BGR')
   
   def execute(self, actions):
-    # @todo: send actions to game window
+    for action in actions:
+      if 'move' == action[0]:
+        pos = action[1]
+        dx, dy = (pos / np.linalg.norm(pos) * 335).astype(np.int32)
+        left, top, right, buttom = win32gui.GetClientRect(self._gameHWND)
+        
+        x, y = ( ((left + right) // 2) + dx, ((top + buttom) // 2) + dy )
+        pywinauto.mouse.click(coords=(x, y))
     return False

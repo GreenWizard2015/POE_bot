@@ -11,9 +11,9 @@ class CBotDebugState:
     return
   
   def show(self, configs):
+    self.logger.info('working')
     if not configs: return
     
-    self.logger.info('working')
     for name in configs:
       cv2.imshow(name, 
         cv2.resize(self._data[name], (640, 480))

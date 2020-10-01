@@ -47,7 +47,7 @@ class CBot:
     
     debug.put('map mask walls', mapMaskWalls)
     debug.put('map mask unknown', mapMaskUnknown)
-    
+
     # temporally code for collecting data
     T = int(time.time())
     if 2 < (T - self._lastDump): # every 2 sec
@@ -58,10 +58,10 @@ class CBot:
       cv2.imwrite(fname % 'unknown', mapMaskUnknown)
       self._lastDump = T
 
-#     self.navigator.update(mapMask)
-    
-    # TODO: return action for exploring map
-    return ([], debug)
+    self.navigator.update(mapMaskWalls, mapMaskUnknown)
+    goal = self.navigator.nearestGoal()[::-1]
+
+    return ([['move', goal]], debug)
 
   def _onMoving(self, screenshot, debug):
     # TODO: Find a way to detect when moving is ended

@@ -20,7 +20,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 def main():
-  debugOutput = ['map mask walls', 'map mask unknown']
+  debugOutput = []
   bot = CBot(logger)
   game = CGame(logger)
   while bot.isActive():
@@ -32,7 +32,7 @@ def main():
     game.execute(actions)
     debugInfo.show(debugOutput)
     pass
-  
+
   cv2.destroyAllWindows()
   
 if __name__ == '__main__':
