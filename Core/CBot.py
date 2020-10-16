@@ -21,7 +21,6 @@ class CBot:
     self._minimapRecognizer = CMinimapRecognizer()
     self.navigator = navigator if navigator else CNavigator()
     self.state = BotState.IDLE
-    self._lastDump = 0 
     pass
   
   def isActive(self):
@@ -48,20 +47,11 @@ class CBot:
     debug.put('map mask walls', mapMaskWalls)
     debug.put('map mask unknown', mapMaskUnknown)
 
-    # temporally code for collecting data
-    T = int(time.time())
-    if 2 < (T - self._lastDump): # every 2 sec
-      os.makedirs("minimap", exist_ok=True)
-      fname = 'minimap/%d_%%s.jpg' % T
-      cv2.imwrite(fname % 'input', mapImg)
-      cv2.imwrite(fname % 'walls', mapMaskWalls)
-      cv2.imwrite(fname % 'unknown', mapMaskUnknown)
-      self._lastDump = T
-
     self.navigator.update(mapMaskWalls, mapMaskUnknown)
     goal = self.navigator.nearestGoal()[::-1]
 
-    return ([['move', goal]], debug)
+#     return ([['move', goal]], debug)
+    return ([], debug)
 
   def _onMoving(self, screenshot, debug):
     # TODO: Find a way to detect when moving is ended

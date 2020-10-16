@@ -15,19 +15,19 @@ else: # local GPU
 import tensorflow.keras as keras
 import time
 
-from GlobalMap.training.CGlobalMapGenerator import CDataGenerator
+from GlobalMap.training.CDataGenerator import CDataGenerator
 from GlobalMap.training.CNoiseInputGenerator import CNoiseInputGenerator
 
-from GlobalMap.training.CMapKeypointsModel import CMapKeypointsModel
+from GlobalMap.training.CNavigatorModel import CNavigatorModel
 
 folder = lambda x: os.path.join(os.path.dirname(__file__), x)
-model = CMapKeypointsModel()
+model = CNavigatorModel()
 model.load(only_fully_trained = False, reset=True)
 model.network.summary()
 
-batch_size=32
-batch_per_epoch=32
-batch_per_validation=0.2
+batch_size = 16
+batch_per_epoch = 64
+batch_per_validation = 0.2
 batch_per_validation = int(batch_per_epoch * batch_per_validation)
 
 params = model.trainingParams()
@@ -44,12 +44,9 @@ trainGenerator = params.DataGenerator(
     gen=CDataGenerator(
       folder('dataset/train'), 
       batchSize=batch_size, batchesPerEpoch=batch_per_epoch, seed=seed,
-      minCommonPoints=20,
-      minInnerPoints=80,
-      smallMapSize=256
+      useCrop=True
     ),
     seed=seed,
-    outputMapSize=256,
     noiseAdded=64,
     noiseVanished=64
   )
@@ -60,14 +57,11 @@ validGenerator = params.DataGenerator(
     gen=CDataGenerator(
       folder('dataset/validation'), 
       batchSize=batch_size, batchesPerEpoch=batch_per_validation, seed=seed,
-      minCommonPoints=20,
-      minInnerPoints=80,
-      smallMapSize=256
+      useCrop=False
     ),
     seed=seed,
-    outputMapSize=256,
-    noiseAdded=64,
-    noiseVanished=64
+    noiseAdded=32,
+    noiseVanished=32
   )
 )
 

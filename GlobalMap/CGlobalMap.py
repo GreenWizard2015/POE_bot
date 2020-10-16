@@ -4,6 +4,7 @@ import math
 from scipy.sparse.dok import dok_matrix
 from scipy.sparse.csgraph import dijkstra
 import skimage.measure
+import time
 
 def distancesMap(img, startPt):
   img = np.pad(img, 1)
@@ -46,18 +47,31 @@ def findShift(A, B):
 class CGlobalMap:
   def __init__(self):
     self._map = np.zeros((2, 1024, 1024), np.float32)
+    self._moves = np.zeros((1, 1024, 1024), np.int8)
     self._prev = None
-    self._prevPos = np.array(self._map.shape[1:]) * 2
     self._mapArea = [math.inf, math.inf, -math.inf, -math.inf]
-    self._pos = np.zeros((2,), np.int32)
+    self._pos = None
+    self._realPos = np.array(self._map.shape[1:]) * 2 # Half of x4
     self.FORGET_RATE = 0.5
+    self._changed = True
+    
+    ##
+    self._collectedFrames = []
+    self.FRAMES_LIMIT = 2
+    self.FRAMES_SIZE = 128
+    self.FRAMES_DIST = int(.6 * self.FRAMES_SIZE / 2) ** 2
     return
   
   def update(self, maskWalls, maskUnknown):
-    shift = np.zeros(2) if self._prev is None else findShift(self._prev, maskWalls)
+    shift = np.zeros(2)
+    self._changed = True
+    if not (self._prev is None):
+      shift = findShift(self._prev, maskWalls)
+      self._changed = 12 < np.sum(np.power(shift, 2)) 
+    if not self._changed: return
 
-    pos = self._prevPos + shift
-    x, y = pos.astype(np.int32) // 4
+    self._realPos = (self._realPos + shift).astype(np.int32)
+    x, y = self._realPos // 4
 
     dim = maskWalls.shape[0] // 4
     self._mapArea = [
@@ -76,47 +90,64 @@ class CGlobalMap:
     
     self._pos = (np.array([x, y]) + np.array([dim, dim]) / 2).astype(np.int32)
     self._prev = maskWalls
-    self._prevPos = pos
-    return 
+    
+    ######
+    x,  y = self._pos
+    d = 2
+    self._moves[0, x-d:x+d+1, y-d:y+d+1] = 1
+    ######
+    self._collectFrames(shift // 4)
+    return
+
+  def _collectFrames(self, shift):
+    dim = self.FRAMES_SIZE // 2
+    # update frames
+    d = 1
+    for frame in self._collectedFrames:
+      frame[0] += shift
+      x, y = (frame[0] + dim).astype(np.int)
+      frame[1][x-d:x+d+1, y-d:y+d+1] = 255
+
+    # remove old frames
+    OOR = [i for i, frame in enumerate(self._collectedFrames) if self.FRAMES_DIST < np.sum(np.square(frame[0]))]
+    for i in reversed(OOR):
+      _, moves, initState = self._collectedFrames[i]
+      t = time.time()
+      cv2.imwrite('minimap/%d_%d_map.jpg' % (t, i), initState)
+      cv2.imwrite('minimap/%d_%d_target.jpg' % (t, i), moves)
+      del self._collectedFrames[i]
+      
+    # add new frame
+    if len(self._collectedFrames) < self.FRAMES_LIMIT:
+      canAddNew = (0 == len(self._collectedFrames)) or (
+        (self.FRAMES_DIST // (self.FRAMES_LIMIT ** 2)) < np.sum(np.square(self._collectedFrames[-1][0]))
+      )
+      if canAddNew:
+        cx, cy = self._pos
+        area = np.where(100 < self._map[:, cx-dim:cx+dim, cy-dim:cy+dim], 255, 0)
+        moves = self._moves[:, cx-dim:cx+dim, cy-dim:cy+dim] * 255
+        self._collectedFrames.append([
+          np.zeros((2,)), # current pos
+          np.zeros((self.FRAMES_SIZE, self.FRAMES_SIZE)), # future moves
+          np.dstack((area[0], area[1], moves[0])) # initially state
+        ])
+    return
   
   def process(self):
-    cx, cy = self._pos 
-    dim = 64 # 512X512 real map
-    area = np.where(100 < self._map[:, cx-dim:cx+dim, cy-dim:cy+dim], 0, 1)
-    area[:, dim, dim] = 1 # cutoff center
-    DST = distancesMap(area[0], startPt=(dim, dim))
-
-    dst = DST.copy()
-    dst[np.where(0 < area[1])] = math.inf # only unknown areas
-    ptsX, ptsY = np.unravel_index(np.argmin(dst), dst.shape)
+    if not self._changed:
+      return np.zeros((2, ))
     
-    directions = np.array([[1, 0], [0, 1], [0, -1], [-1, 0]])
-    path = []
-    try:
-      while (len(path) < 1256) and (0 < DST[ptsX, ptsY]):
-        p = np.array([ptsX, ptsY])
-        bestScore = math.inf
-        bestDir = 0
-        for i in range(4):
-          x, y = directions[i] + p
-          s = DST[x, y]
-          if s < bestScore:
-            bestScore, bestDir = s, i
-            
-        ptsX, ptsY = directions[bestDir] + p
-        path.append((ptsX, ptsY))
-    except:
-      pass
-
-    dest = np.array(path[-10:][0])
+    cx, cy = self._pos 
+    dim = 128 # 512X512 real map
+    area = np.where(100 < self._map[:, cx-dim:cx+dim, cy-dim:cy+dim], 1, 0)
+    area[:, dim, dim] = 0 # cutoff center
     
     # visualize path
     dbg = np.zeros((*area.shape[1:], 3))
-    dbg[:,:,0] = 1 - area[0]
-    dbg[:,:,1] = 1 - area[1]
-    for x, y in path:
-      dbg[x, y, 2] = 1
-    dbg[dest[0], dest[1], :] = 1
-    cv2.imshow('gm', cv2.resize(dbg, (645, 645)))
+    dbg[:,:,0] = area[0]
+    dbg[:,:,1] = area[1]
+    dbg[:,:,2] = self._moves[:, cx-dim:cx+dim, cy-dim:cy+dim]
+    cv2.imshow('gm', cv2.resize(dbg, (945, 945)))
     ###
-    return dest - dim
+
+    return np.zeros((2, ))

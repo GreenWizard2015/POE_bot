@@ -1,6 +1,6 @@
 import os
 import cv2
-from MinimapRecognizer.training.losses import MulticlassDiceLoss
+from Utils.losses import MulticlassDiceLoss
 from MinimapRecognizer.training.model import MRNetwork
 from tensorflow import keras
 
