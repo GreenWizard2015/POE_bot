@@ -26,15 +26,22 @@ def Network(input_shape):
   
   convA, res = downsamplingBlockWithLink(res, 3, 4)
   convB, res = downsamplingBlockWithLink(res, 3, 8)
-  convC, res = downsamplingBlockWithLink(res, 3, 16)
-  convD, res = downsamplingBlockWithLink(res, 3, 24)
+  convC, res = downsamplingBlockWithLink(res, 5, 16)
+  convD, res = downsamplingBlockWithLink(res, 5, 24)
   
-  res = convBlock(res, 3, 32)
+  res = convBlock(res, 5, 32)
   
-  res = upsamplingBlock(res, convD, 3, 24)
-  res = upsamplingBlock(res, convC, 3, 16)
-  res = upsamplingBlock(res, convB, 3, 8)
-  res = upsamplingBlock(res, convA, 3, 4)
+  res = upsamplingBlock(res, convD, 5, 24)
+  res = upsamplingBlock(res, convC, 5, 16)
+  res = upsamplingBlock(res, convB, 7, 16)
+  res = upsamplingBlock(res, convA, 7, 24)
+  
+  params = [(1, 64), (3, 32), (5, 16), (7, 16)]
+  for i in range(4):
+    res = layers.Concatenate()([inputs, res, convA])
+    for sz, filters in params:
+      res = convBlock(res, sz, filters)
+    params = list(reversed(params))
 
   return keras.Model(
     inputs=inputs,
@@ -85,11 +92,11 @@ class CTrainingParameters:
     return
   
   def loss(self):
-    dice = MulticlassDiceLoss(weights=[1., 1.])
+    dice = MulticlassDiceLoss(weights=[1., .1])
     def calc(y_true, y_pred):
       dloss = dice(
         y_true,
-        keras.backend.pow(y_pred, 5) # push "down" predictions
+        keras.backend.pow(y_pred, 2) # push "down" predictions
       )
       return dloss
     return calc
