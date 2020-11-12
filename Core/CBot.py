@@ -48,9 +48,9 @@ class CBot:
     debug.put('map mask unknown', mapMaskUnknown)
 
     self.navigator.update(mapMaskWalls, mapMaskUnknown)
-    goal = self.navigator.nearestGoal()[::-1]
-
-#     return ([['move', goal]], debug)
+    goal = self.navigator.nearestGoal()
+    if goal is not None:
+      return ([['move', goal[::-1]]], debug)
     return ([], debug)
 
   def _onMoving(self, screenshot, debug):
