@@ -30,7 +30,7 @@ class CGlobalMap:
     self._changed = True
     if not (self._prev is None):
       shift = findShift(self._prev, maskWalls)
-      self._changed = 12 < np.sum(np.power(shift, 2)) 
+      self._changed = 25 < np.sum(np.power(shift, 2)) 
     if not self._changed: return
 
     self._realPos = (self._realPos + shift).astype(np.int32)
@@ -49,6 +49,11 @@ class CGlobalMap:
       skimage.measure.block_reduce(maskWalls, (4, 4), np.max),
       skimage.measure.block_reduce(maskUnknown, (4, 4), np.max)
     ])
+    # ignore central area
+    c = dim // 2
+    sz = 4
+    masks[:, c-sz:c+sz+1, c-sz:c+sz+1] = oldArea[:, c-sz:c+sz+1, c-sz:c+sz+1]
+    ###########
     self._map[:, x:x+dim, y:y+dim] = (oldArea + self.FORGET_RATE * masks) / (1 + self.FORGET_RATE)
     
     self._pos = (np.array([x, y]) + np.array([dim, dim]) / 2).astype(np.int32)
